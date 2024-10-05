@@ -51,5 +51,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "BA.sln"
+    "dotnet.defaultSolution": "BA.sln",
+    "editor.codeLens": false
 }
