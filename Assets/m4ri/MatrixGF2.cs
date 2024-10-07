@@ -8,6 +8,7 @@ namespace m4ri {
     {
         public IntPtr headPtr;
         public int nrows, ncols;
+        public static int PRINT_LIMIT = 100;
 
         public MatrixGF2(int rows, int cols) {
             headPtr = mzd_init(rows, cols);
@@ -49,8 +50,18 @@ namespace m4ri {
             Debug.LogError("Tried to multiply matrices with mismatching dimensions");
             return null;
         }
-
+        // Overrides the == operator on MatrixGF2 instances, allowing checking equality of two matrices
+        public static bool operator==(MatrixGF2 left, MatrixGF2 right) {
+            if (left.nrows != right.nrows || left.ncols != right.ncols) return false;
+            else return left.IsEqualTo(right);
+        }
+        // Overrides the != operator on MatrixGF2 instances, allowing checking inequality of two matrices
+        public static bool operator!=(MatrixGF2 left, MatrixGF2 right) {
+            return !(left==right);
+        }
+        // Overrides ToString() for printing the whole matrix, if rows and cols are both at most PRINT_LIMIT
         public override string ToString() {
+            if (nrows > PRINT_LIMIT || ncols > PRINT_LIMIT) return nrows+" x "+ncols+" Matrix";
             StringBuilder sb = new StringBuilder();
             sb.Capacity = nrows * (ncols + 1);
             for (int row = 0; row < nrows; row++) {
@@ -61,7 +72,7 @@ namespace m4ri {
             }
             return sb.ToString();
         }
-        // Randomizes all entries of the matrix
+        // Randomizes all entries of the matrix "in place"
         public void Randomize() {
             mzd_randomize(headPtr);
         }
@@ -83,6 +94,10 @@ namespace m4ri {
         public static bool IsZero(MatrixGF2 toCheck) {
             return mzd_is_zero(toCheck.headPtr) == 1;
         }
+        // Computes the inverse matrix, if matrix has full rank
+        public MatrixGF2 Inverse() {
+            return new MatrixGF2(nrows, ncols, mzd_inv_m4ri(IntPtr.Zero, headPtr));
+        }
         // Computes the reduced row echelon form of the matrix "in place" and returns the rank of the matrix
         public int Rref() {
             return mzd_echelonize_m4ri(headPtr, 1);
@@ -91,5 +106,24 @@ namespace m4ri {
         public int Ref() {
             return mzd_echelonize_m4ri(headPtr, 0);
         }
+        // Returns the identity matrix of the given size
+        public static MatrixGF2 Identity(int size) {
+            MatrixGF2 m = new MatrixGF2(size, size);
+            mzd_set_ui(m.headPtr, 1);
+            return m;
+        }
+        // Returns the submatrix from any row/column to (NOT INCLUDING) any other row/column
+        public MatrixGF2 Submatrix(int rowStart, int colStart, int rowEnd, int colEnd) {
+            if (rowStart >= rowEnd || colStart >= colEnd || rowStart < 0 || colStart < 0 || rowEnd > nrows || colEnd > ncols) {
+                Debug.LogError("Parameter(s) out of bounds for submatrix creation");
+                return null;
+            }
+            return new MatrixGF2(rowEnd - rowStart, colEnd - colStart, mzd_submatrix(IntPtr.Zero, headPtr, rowStart, colStart, rowEnd, colEnd));
+        }
+
+
+        // Not important
+        public override bool Equals(object obj) => obj.GetType().IsEquivalentTo(typeof(MatrixGF2)) && this == (MatrixGF2) obj;
+        public override int GetHashCode() => base.GetHashCode();
     }
 }
