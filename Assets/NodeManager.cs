@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class NodeManager : MonoBehaviour
 {
-    public uint gridX, gridY;
+    public uint gridX, gridY, gridDistance;
     public GameObject floor, nodePrefab, nodeParent;
     public List<GameObject> nodes = new();
 
@@ -20,7 +20,9 @@ public class NodeManager : MonoBehaviour
         if (diff > 0) {
             // Add nodes since more are needed
             for (int i = 0; i < diff; i++) {
-                nodes.Add(Instantiate(nodePrefab, parentTransform));
+                GameObject toAdd = Instantiate(nodePrefab, parentTransform);
+                toAdd.GetComponent<MeshRenderer>().enabled = true;
+                nodes.Add(toAdd);
             }
         }
         else if (diff < 0) {
@@ -33,7 +35,7 @@ public class NodeManager : MonoBehaviour
         }
         // Reposition all nodes
         for (int i = 0; i < nodes.Count; i++) {
-            nodes[i].transform.position = new Vector3(i % gridX, 0, i / gridX);
+            nodes[i].transform.position = gridDistance * new Vector3(i % gridX, 0, i / gridX);
         }
     }
     
@@ -52,5 +54,9 @@ public class NodeManager : MonoBehaviour
                 break;
             
         }
+    }
+
+    void Start() {
+        nodePrefab.GetComponent<MeshRenderer>().enabled = false;
     }
 }
