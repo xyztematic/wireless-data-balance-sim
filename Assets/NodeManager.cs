@@ -12,7 +12,6 @@ public class NodeManager : MonoBehaviour
         GRID_X,
         GRID_Y,
     }
-
     private void OnGridChange() {
         Transform parentTransform = nodeParent.transform;
         int diff = (int) (gridX*gridY) - nodes.Count;
@@ -34,8 +33,9 @@ public class NodeManager : MonoBehaviour
             }
         }
         // Reposition all nodes
+        float y = nodePrefab.transform.position.y;
         for (int i = 0; i < nodes.Count; i++) {
-            nodes[i].transform.position = gridDistance * new Vector3(i % gridX, 0, i / gridX);
+            nodes[i].transform.position = gridDistance * new Vector3(i % gridX, y / gridDistance, i / gridX);
         }
     }
     
