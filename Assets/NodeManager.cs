@@ -5,6 +5,7 @@ using UnityEngine;
 public class NodeManager : MonoBehaviour
 {
     public uint gridX, gridY, gridDistance;
+    public float nodeLoopTime;
     public GameObject floor, nodePrefab, nodeParent;
     public List<GameObject> nodes = new();
 
@@ -32,10 +33,11 @@ public class NodeManager : MonoBehaviour
                 DestroyImmediate(toDestroy);
             }
         }
-        // Reposition all nodes
+        // Reposition all nodes and activate them
         float y = nodePrefab.transform.position.y;
         for (int i = 0; i < nodes.Count; i++) {
             nodes[i].transform.position = gridDistance * new Vector3(i % gridX, y / gridDistance, i / gridX);
+            nodes[i].GetComponent<Node>().Activate(nodeLoopTime, this);
         }
     }
     
