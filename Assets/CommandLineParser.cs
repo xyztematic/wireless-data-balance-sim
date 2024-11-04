@@ -4,6 +4,8 @@ using static NodeManager.NodeSetting;
 
 public class CommandLineParser : MonoBehaviour
 {
+    public GameObject cameraObj;
+    private CameraController cameraController;
     private GameObject runtimeScripts;
     private NodeManager nodeManager;
     private InputField _inputField;
@@ -32,15 +34,26 @@ public class CommandLineParser : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Return))
                 Parse(fieldValue);
                 _inputField.text = "";
+                _inputField.interactable = false;
+                cameraController.disableMovement = false;
         });
+        _inputField.interactable = false;
+
+        cameraController = cameraObj.GetComponent<CameraController>();
+        if (cameraController == null) Debug.LogError("CameraController not found!");
     }
 
     void Update() {
         if (Input.GetKeyDown(KeyCode.Tab) && _inputField != null) {
-            if (_inputField.isFocused) _inputField.DeactivateInputField();
+            if (_inputField.isFocused) {
+                _inputField.DeactivateInputField();
+                _inputField.interactable = false;
+                cameraController.disableMovement = false;
+            } 
             else {
+                _inputField.interactable = true;
                 _inputField.ActivateInputField();
-                _inputField.Select();
+                cameraController.disableMovement = true;
             }
         }
     }
