@@ -1015,10 +1015,11 @@ MonoBehaviour:
   gridY: 0
   gridDistance: 10
   nodeLoopTime: 0
+  nodeRange: 15
   floor: {fileID: 2066384637}
   nodePrefab: {fileID: 429279981}
   nodeParent: {fileID: 1276339940}
-  nodes: []
+  allNodes: []
 --- !u!1 &2066384637
 GameObject:
   m_ObjectHideFlags: 0

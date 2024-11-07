@@ -8,17 +8,15 @@ public class Node : MonoBehaviour
     private List<GameObject> neighbors;
     private Coroutine nodeLoop;
 
-    private int chunkX, chunkY;
+    private ulong chunkID;
     private float loopTime;
 
-    public void Activate(float loopTime, NodeManager nodeManager) {
+    public void Activate(float loopTime, ulong chunkID, NodeManager nodeManager) {
         this.loopTime = loopTime;
+        this.chunkID = chunkID;
         this.nodeManager = nodeManager;
-        this.neighbors = PopulateNeighbors();
+        neighbors = nodeManager.GetNeighborCandidates(chunkID);
         this.nodeLoop = StartCoroutine(NodeLoop());
-    }
-    private List<GameObject> PopulateNeighbors() {
-        return new();
     }
     private IEnumerator NodeLoop() {
         yield return new WaitForSeconds(loopTime);
