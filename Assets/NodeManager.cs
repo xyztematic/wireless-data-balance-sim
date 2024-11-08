@@ -8,6 +8,10 @@ public class NodeManager : MonoBehaviour
     public GameObject floor, nodePrefab, nodeParent;
     public List<GameObject> allNodes = new();
     public Dictionary<ulong, List<GameObject>> chunkLookup = new();
+    public Color highlightColor1 = Color.red, highlightColor2 = Color.magenta;
+
+    private readonly ulong yBitOffset = 0x00000001_00000000ul;
+    private List<GameObject> highlightedNodes = new();
 
     public enum NodeSetting {
         GRID_X,
@@ -17,11 +21,12 @@ public class NodeManager : MonoBehaviour
     public ulong ChunkID(Vector3 worldPos) {
         ulong chunkID = 0;
         chunkID += (ulong) Mathf.FloorToInt(worldPos.x / nodeRange);
-        chunkID += ((ulong) Mathf.FloorToInt(worldPos.y / nodeRange)) << sizeof(int);
+        chunkID += ((ulong) Mathf.FloorToInt(worldPos.z / nodeRange)) * yBitOffset;
         return chunkID;
     }
     private void OnGridChange() {
-        chunkLookup = new();
+        chunkLookup.Clear();
+        highlightedNodes.Clear();
         Transform parentTransform = nodeParent.transform;
         int diff = (int) (gridX*gridY) - allNodes.Count;
 
@@ -41,8 +46,9 @@ public class NodeManager : MonoBehaviour
                 DestroyImmediate(toDestroy);
             }
         }
-        // Reposition all nodes, add them to the chunk dictionary and activate them
+        // Reposition all nodes, add them to the chunk dictionary and activate them after
         float y = nodePrefab.transform.position.y;
+        List<ulong> tempChunkIDs = new(allNodes.Count);
         for (int i = 0; i < allNodes.Count; i++) {
             Vector3 newPosition = gridDistance * new Vector3(i % gridX, y / gridDistance, i / gridX);
             allNodes[i].transform.position = newPosition;
@@ -52,8 +58,11 @@ public class NodeManager : MonoBehaviour
                 chunkLookup.Add(chunkID, new());
             }
             chunkLookup[chunkID].Add(allNodes[i]);
+            tempChunkIDs.Add(chunkID);
+        }
+        for (int i = 0; i < allNodes.Count; i++) {
 
-            allNodes[i].GetComponent<Node>().Activate(nodeLoopTime, chunkID, this);
+            allNodes[i].GetComponent<Node>().Activate(nodeLoopTime, nodeRange, tempChunkIDs[i], this);
         }
     }
     
@@ -77,7 +86,7 @@ public class NodeManager : MonoBehaviour
     public List<GameObject> GetNeighborCandidates(ulong chunkID) {
         List<GameObject> neighborCandidates = new();
         foreach (ulong neighborChunkID in GetNeighboringChunkIDs(chunkID)) {
-            neighborCandidates.AddRange(chunkLookup[chunkID]);
+            neighborCandidates.AddRange(chunkLookup[neighborChunkID]);
         }
         return neighborCandidates;
     }
@@ -103,6 +112,21 @@ public class NodeManager : MonoBehaviour
         }
         neighboringChunkIDs.RemoveAll(x => entriesToRemove.Contains(x));
         return neighboringChunkIDs;
+    }
+    public void HighlightNode(int x, int y, bool alsoHighlightNeighbors = false) {
+        int index = y * (int)gridX + x;
+        if (allNodes.Count < index) return;
+        if (alsoHighlightNeighbors) {
+            highlightedNodes.AddRange(allNodes[index].GetComponent<Node>().HighlightNeighbors(highlightColor2));
+        }
+        allNodes[index].GetComponent<MeshRenderer>().material.color = highlightColor1;
+        highlightedNodes.Add(allNodes[index]);
+    }
+    public void UnhighlightAll() {
+        foreach (GameObject go in highlightedNodes) {
+            go.GetComponent<MeshRenderer>().material.color = Color.white;
+        }
+        highlightedNodes.Clear();
     }
     void Start() {
         nodePrefab.GetComponent<MeshRenderer>().enabled = false;

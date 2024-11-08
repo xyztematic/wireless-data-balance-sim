@@ -19,6 +19,15 @@ public class CommandLineParser : MonoBehaviour
             nodeManager.ChangeSetting(GRID_X, int.Parse(parsed[1]));
             nodeManager.ChangeSetting(GRID_Y, int.Parse(parsed[2]));
         }
+        else if (parsed[0] == "i" || parsed[0] == "info") {
+            nodeManager.HighlightNode(int.Parse(parsed[1]), int.Parse(parsed[2]));
+        }
+        else if (parsed[0] == "in" || parsed[0] == "infon" || parsed[0] == "infoneighbor") {
+            nodeManager.HighlightNode(int.Parse(parsed[1]), int.Parse(parsed[2]), true);
+        }
+        else if (parsed[0] == "ic" || parsed[0] == "infoc" || parsed[0] == "infoclear") {
+            nodeManager.UnhighlightAll();
+        }
     }
 
     void Start() {
