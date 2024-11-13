@@ -1,0 +1,16 @@
+#pragma kernel CSMain
+
+RWTexture2D<float4> Result;
+//StructuredBuffer<float3> NodePosAndRanges;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    //if (id.x >= NodePosAndRanges.Length) return;
+    //float3 nodeData = NodePosAndRanges[id.x];
+    uint renderTexWidth, renderTexHeight;
+    Result.GetDimensions(renderTexWidth, renderTexHeight);
+    float2 idf = float2(id.x, id.y);
+    Result[id.xy] = float4(idf.x / renderTexWidth, idf.y / renderTexHeight, 0.0, 0.0);
+
+}
