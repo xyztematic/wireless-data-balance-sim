@@ -114,6 +114,7 @@ public class NodeManager : MonoBehaviour
         return neighboringChunkIDs;
     }
     public void HighlightNode(int x, int y, bool alsoHighlightNeighbors = false) {
+        UnhighlightAll();
         int index = y * (int)gridX + x;
         if (allNodes.Count < index) return;
         if (alsoHighlightNeighbors) {
@@ -132,6 +133,7 @@ public class NodeManager : MonoBehaviour
             go.GetComponent<MeshRenderer>().material.color = Color.white;
         }
         highlightedNodes.Clear();
+        rangeIndicator.transform.localScale = Vector3.zero;
     }
     void Start() {
         nodePrefab.GetComponent<MeshRenderer>().enabled = false;
