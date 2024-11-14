@@ -2,18 +2,18 @@ Shader "Unlit/RangeVisualizer"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
+        _MainTex ("Main Texture", 2D) = "white" {}
+        _RangeColor ("Range Color", Color) = (1.0, 1.0, 1.0, 1.0)
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags { "RenderType"="Transparent" }
         LOD 100
-
+        Offset -1, -1
         Pass
         {
             CGPROGRAM
-// Upgrade NOTE: excluded shader from DX11, OpenGL ES 2.0 because it uses unsized arrays
-#pragma exclude_renderers d3d11 gles
+
             #pragma vertex vert
             #pragma fragment frag
 
@@ -33,7 +33,7 @@ Shader "Unlit/RangeVisualizer"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            float _NodePositions[2*10000];
+            float4 _RangeColor;
 
             v2f vert (appdata v)
             {
@@ -45,8 +45,11 @@ Shader "Unlit/RangeVisualizer"
 
             fixed4 frag (v2f i) : SV_Target
             {
-
-                return float4(i.uv.x, i.uv.y, 1, 1);
+                float2 midpoint = float2(0.5,0.5);
+                float dist = distance(i.uv, midpoint);
+                if (dist > 0.5) discard;
+                float d = smoothstep(distance(i.uv, midpoint), 0.5, 0.49);
+                return d * _RangeColor;
             }
             ENDCG
         }
