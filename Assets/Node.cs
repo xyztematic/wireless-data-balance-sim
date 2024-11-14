@@ -33,4 +33,8 @@ public class Node : MonoBehaviour
         }
         return neighbors;
     }
+
+    public float GetNodeRange() {
+        return nodeRange;
+    }
 }

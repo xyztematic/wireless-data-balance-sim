@@ -5,12 +5,12 @@ public class NodeManager : MonoBehaviour
 {
     public uint gridX, gridY, gridDistance;
     public float nodeLoopTime, nodeRange;
-    public GameObject floor, nodePrefab, nodeParent;
-    public List<GameObject> allNodes = new();
+    public GameObject floor, nodePrefab, nodeParent, rangeIndicator;
     public Dictionary<ulong, List<GameObject>> chunkLookup = new();
     public Color highlightColor1 = Color.red, highlightColor2 = Color.magenta;
 
     private readonly ulong yBitOffset = 0x00000001_00000000ul;
+    private List<GameObject> allNodes = new();
     private List<GameObject> highlightedNodes = new();
 
     public enum NodeSetting {
@@ -121,6 +121,11 @@ public class NodeManager : MonoBehaviour
         }
         allNodes[index].GetComponent<MeshRenderer>().material.color = highlightColor1;
         highlightedNodes.Add(allNodes[index]);
+
+        // add the range circle visualizer
+        rangeIndicator.transform.position = new Vector3(allNodes[index].transform.position.x, 0, allNodes[index].transform.position.z);
+        float scaleToSet = 2 * allNodes[index].GetComponent<Node>().GetNodeRange();
+        rangeIndicator.transform.localScale = scaleToSet * Vector3.one;
     }
     public void UnhighlightAll() {
         foreach (GameObject go in highlightedNodes) {
