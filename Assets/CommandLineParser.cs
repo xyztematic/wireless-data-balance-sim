@@ -28,6 +28,12 @@ public class CommandLineParser : MonoBehaviour
             nodeManager.ChangeLayout(GRID_HEX);
             nodeManager.RebuildNodes();
         }
+        else if (parsed[0] == "r" || parsed[0] == "random" || parsed[0] == "randomgrid") {
+            nodeManager.ChangeSetting(GRID_X, int.Parse(parsed[1]));
+            nodeManager.ChangeSetting(GRID_Y, int.Parse(parsed[2]));
+            nodeManager.ChangeLayout(TRUE_RANDOM);
+            nodeManager.RebuildNodes();
+        }
         else if (parsed[0] == "i" || parsed[0] == "info") {
             nodeManager.HighlightNode(int.Parse(parsed[1]), int.Parse(parsed[2]));
         }

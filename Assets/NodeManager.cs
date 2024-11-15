@@ -18,12 +18,12 @@ public class NodeManager : MonoBehaviour
 
     public enum NodeSetting {
         GRID_X,
-        GRID_Y,
-        LAYOUT_MODE
+        GRID_Y
     }
     public enum LayoutMode {
         GRID_SQUARE,
-        GRID_HEX
+        GRID_HEX,
+        TRUE_RANDOM
     }
 
     public ulong ChunkID(Vector3 worldPos) {
@@ -66,6 +66,9 @@ public class NodeManager : MonoBehaviour
                     break;
                 case LayoutMode.GRID_HEX:
                     newPosition = gridDistance * new Vector3((i % gridX)+((i/gridX)%2)/2f, y / gridDistance, i / gridX * SQRT3OVER2);
+                    break;
+                case LayoutMode.TRUE_RANDOM:
+                    newPosition = gridDistance * new Vector3(gridX*Random.value, y / gridDistance, gridY*Random.value);
                     break;
                 default:
                     newPosition = Vector3.zero;
