@@ -8,14 +8,22 @@ public class NodeManager : MonoBehaviour
     public GameObject floor, nodePrefab, nodeParent, rangeIndicator;
     public Dictionary<ulong, List<GameObject>> chunkLookup = new();
     public Color highlightColor1 = Color.red, highlightColor2 = Color.magenta;
+    public Vector2 floorSize;
 
     private readonly ulong yBitOffset = 0x00000001_00000000ul;
+    private const float SQRT3OVER2 = 0.866025404f;
+    private LayoutMode currentLayout = LayoutMode.GRID_SQUARE;
     private List<GameObject> allNodes = new();
     private List<GameObject> highlightedNodes = new();
 
     public enum NodeSetting {
         GRID_X,
-        GRID_Y
+        GRID_Y,
+        LAYOUT_MODE
+    }
+    public enum LayoutMode {
+        GRID_SQUARE,
+        GRID_HEX
     }
 
     public ulong ChunkID(Vector3 worldPos) {
@@ -24,9 +32,9 @@ public class NodeManager : MonoBehaviour
         chunkID += ((ulong) Mathf.FloorToInt(worldPos.z / nodeRange)) * yBitOffset;
         return chunkID;
     }
-    private void OnGridChange() {
+    public void RebuildNodes() {
+        UnhighlightAll();
         chunkLookup.Clear();
-        highlightedNodes.Clear();
         Transform parentTransform = nodeParent.transform;
         int diff = (int) (gridX*gridY) - allNodes.Count;
 
@@ -49,8 +57,20 @@ public class NodeManager : MonoBehaviour
         // Reposition all nodes, add them to the chunk dictionary and activate them after
         float y = nodePrefab.transform.position.y;
         List<ulong> tempChunkIDs = new(allNodes.Count);
+        print(currentLayout);
         for (int i = 0; i < allNodes.Count; i++) {
-            Vector3 newPosition = gridDistance * new Vector3(i % gridX, y / gridDistance, i / gridX);
+            Vector3 newPosition;
+            switch (currentLayout) {
+                case LayoutMode.GRID_SQUARE:
+                    newPosition = gridDistance * new Vector3(i % gridX, y / gridDistance, i / gridX);
+                    break;
+                case LayoutMode.GRID_HEX:
+                    newPosition = gridDistance * new Vector3((i % gridX)+((i/gridX)%2)/2f, y / gridDistance, i / gridX * SQRT3OVER2);
+                    break;
+                default:
+                    newPosition = Vector3.zero;
+                    break;
+            }
             allNodes[i].transform.position = newPosition;
 
             ulong chunkID = ChunkID(newPosition);
@@ -70,17 +90,21 @@ public class NodeManager : MonoBehaviour
         switch (setting) {
             case NodeSetting.GRID_X:
                 gridX = (uint)newValue;
-                OnGridChange();
+                RebuildNodes();
                 break;
             case NodeSetting.GRID_Y:
                 gridY = (uint)newValue;
-                OnGridChange();
+                RebuildNodes();
                 break;
+            
             default:
                 Debug.LogError("Tried to change unknown setting");
                 break;
             
         }
+    }
+    public void ChangeLayout(LayoutMode layout) {
+        currentLayout = layout;
     }
 
     public List<GameObject> GetNeighborCandidates(ulong chunkID) {
