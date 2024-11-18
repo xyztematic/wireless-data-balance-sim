@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class NodeManager : MonoBehaviour
 {
-    public uint gridX, gridY, gridDistance;
+    public uint gridX, gridY, gridDistance, dimension;
     public float nodeLoopTime, nodeRange;
     public GameObject floor, nodePrefab, nodeParent, rangeIndicator;
     public Dictionary<ulong, List<GameObject>> chunkLookup = new();
@@ -62,7 +62,7 @@ public class NodeManager : MonoBehaviour
         }
         for (int i = 0; i < allNodes.Count; i++) {
 
-            allNodes[i].GetComponent<Node>().Activate(nodeLoopTime, nodeRange, tempChunkIDs[i], this);
+            allNodes[i].GetComponent<Node>().Activate(dimension, nodeLoopTime, nodeRange, tempChunkIDs[i], this);
         }
     }
     
