@@ -52,5 +52,20 @@
         "Temp/": true
     },
     "dotnet.defaultSolution": "BA.sln",
-    "editor.codeLens": false
+    "editor.codeLens": false,
+    "dotnetAcquisitionExtension.existingDotnetPath": [
+        {
+            "extensionId": "ms-dotnettools.csharp",
+            "path": "/usr/lib/dotnet/dotnet"
+        },
+        {
+            "extensionId": "ms-dotnettools.csdevkit", 
+            "path": "/usr/lib/dotnet/dotnet"
+        },
+        {
+            "extensionId": "visualstudiotoolsforunity.vstuc", 
+            "path": "/usr/lib/dotnet/dotnet"
+        }
+    
+    ]
 }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using static NodeManager.NodeSetting;
+using static NodeManager.LayoutMode;
 
 public class CommandLineParser : MonoBehaviour
 {
@@ -15,9 +16,23 @@ public class CommandLineParser : MonoBehaviour
         command = command.ToLower();
         if (command.Length < 1) return;
         string[] parsed = command.Split(' ');
-        if (parsed[0] == "g" || parsed[0] == "grid") {
+        if (parsed[0] == "g" || parsed[0] == "grid" || parsed[0] == "squaregrid") {
             nodeManager.ChangeSetting(GRID_X, int.Parse(parsed[1]));
             nodeManager.ChangeSetting(GRID_Y, int.Parse(parsed[2]));
+            nodeManager.ChangeLayout(GRID_SQUARE);
+            nodeManager.RebuildNodes();
+        }
+        else if (parsed[0] == "h" || parsed[0] == "hex" || parsed[0] == "hexgrid") {
+            nodeManager.ChangeSetting(GRID_X, int.Parse(parsed[1]));
+            nodeManager.ChangeSetting(GRID_Y, int.Parse(parsed[2]));
+            nodeManager.ChangeLayout(GRID_HEX);
+            nodeManager.RebuildNodes();
+        }
+        else if (parsed[0] == "r" || parsed[0] == "random" || parsed[0] == "randomgrid") {
+            nodeManager.ChangeSetting(GRID_X, int.Parse(parsed[1]));
+            nodeManager.ChangeSetting(GRID_Y, int.Parse(parsed[2]));
+            nodeManager.ChangeLayout(TRUE_RANDOM);
+            nodeManager.RebuildNodes();
         }
         else if (parsed[0] == "i" || parsed[0] == "info") {
             nodeManager.HighlightNode(int.Parse(parsed[1]), int.Parse(parsed[2]));
