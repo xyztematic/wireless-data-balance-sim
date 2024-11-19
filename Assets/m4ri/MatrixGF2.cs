@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Text;
 using UnityEngine;
 using static Interface_m4ri;
@@ -91,9 +92,6 @@ namespace m4ri {
         public bool IsZero() {
             return mzd_is_zero(headPtr) == 1;
         }
-        public static bool IsZero(MatrixGF2 toCheck) {
-            return mzd_is_zero(toCheck.headPtr) == 1;
-        }
         // Computes the inverse matrix, if matrix has full rank
         public MatrixGF2 Inverse() {
             return new MatrixGF2(nrows, ncols, mzd_inv_m4ri(IntPtr.Zero, headPtr));
@@ -120,8 +118,17 @@ namespace m4ri {
             }
             return new MatrixGF2(rowEnd - rowStart, colEnd - colStart, mzd_submatrix(IntPtr.Zero, headPtr, rowStart, colStart, rowEnd, colEnd));
         }
-
-
+        // Returns the index of the first full zero row. If there is none, return amount of rows
+        public int FirstZeroRow() {
+            return mzd_first_zero_row(headPtr);
+        }
+        // Overwrites the specified row with the specified values. Ignores all values besides 0 and 1
+        public void WriteRow(int rowIndex, int[] toWrite) {
+            if (toWrite.Length < ncols || rowIndex >= nrows || rowIndex < 0) return;
+            for (int i = 0; i < ncols; i++) {
+                this[rowIndex, i] = toWrite[i];
+            }
+        }
         // Not important
         public override bool Equals(object obj) => obj.GetType().IsEquivalentTo(typeof(MatrixGF2)) && this == (MatrixGF2) obj;
         public override int GetHashCode() => base.GetHashCode();

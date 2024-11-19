@@ -26,7 +26,9 @@ public class Interface_m4ri
     [DllImport("libm4ri-0.0.20200125.so")]
     public static extern int mzd_is_zero(IntPtr M);
     [DllImport("libm4ri-0.0.20200125.so")]
-    public static extern IntPtr mzd_from_jcf(nint str, int verbose = 1);
+    public static extern int mzd_first_zero_row(IntPtr M);
+    [DllImport("libm4ri-0.0.20200125.so")]
+    public static extern int mzd_gauss_delayed(IntPtr M, int start_col, int full = 0);
     [DllImport("libm4ri-0.0.20200125.so")]
     public static extern IntPtr mzd_set_ui(IntPtr M, uint zero_or_one);
     [DllImport("libm4ri-0.0.20200125.so")]

@@ -2,12 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using m4ri;
+using System.Collections.Concurrent;
 
 public class Node : MonoBehaviour
 {
     private NodeManager nodeManager;
     private List<GameObject> neighbors;
+    // Inventory of this node, represented as a bit-matrix of size "dimension"
     private MatrixGF2 inventory;
+    // Tracks the first empty row of the bit-matrix for easy insertion
+    private int firstZeroRow;
+    // Stores incoming data sent from neighboring nodes in a thread-safe queue for later processing
+    private ConcurrentQueue<int[]> recieveBuffer;
     private Coroutine nodeLoop;
     private int dimension;
     private float loopTime, nodeRange;
@@ -55,6 +61,7 @@ public class Node : MonoBehaviour
             return;
         }
         this.inventory = matrix;
+        this.firstZeroRow = matrix.FirstZeroRow();
     }
     public void SetRandomBasisInventory() {
         MatrixGF2 rndMatrix = new MatrixGF2(this.dimension, this.dimension);
@@ -67,10 +74,18 @@ public class Node : MonoBehaviour
             rank = copy.Ref();
         }
         this.inventory = rndMatrix;
+        this.firstZeroRow = dimension;
     }
     public void SetStandardBasisInventory() {
         this.inventory = MatrixGF2.Identity(this.dimension);
+        this.firstZeroRow = dimension;
     }
 
     // TODO: Recieving data from neighboring node and integrate into inventory
+    public void StepRecieveBuffer() {
+        int[] topItem;
+        if (!this.recieveBuffer.TryDequeue(out topItem) || topItem.Length != dimension) return;
+        inventory.WriteRow(firstZeroRow, topItem);
+        firstZeroRow = inventory.FirstZeroRow();
+    }
 }
