@@ -3,19 +3,23 @@ using System.Collections.Generic;
 using UnityEngine;
 using m4ri;
 using System.Collections.Concurrent;
+using System;
+using Codice.CM.Common.Serialization;
 
 public class Node : MonoBehaviour
 {
     private NodeManager nodeManager;
     private List<GameObject> neighbors;
+    private int neighborCount;
     // Inventory of this node, represented as a bit-matrix of size "dimension"
     private MatrixGF2 inventory;
-    // Tracks the first empty row of the bit-matrix for easy insertion
     private int firstZeroRow;
+    private int rank;
     // Stores incoming data sent from neighboring nodes in a thread-safe queue for later processing
     private ConcurrentQueue<int[]> recieveBuffer;
     private Coroutine nodeLoop;
     private int dimension;
+    private int logDimension;
     private float loopTime, nodeRange;
     private ulong chunkID;
 
@@ -23,6 +27,9 @@ public class Node : MonoBehaviour
 
     public void Activate(uint dimension, float loopTime, float nodeRange, ulong chunkID, NodeManager nodeManager) {
         this.dimension = (int) dimension;
+        this.logDimension = Mathf.FloorToInt(Mathf.Log(this.dimension, 2f)+1);
+        this.firstZeroRow = 0;
+        this.rank = 0;
         this.loopTime = loopTime;
         this.nodeRange = nodeRange;
         this.chunkID = chunkID;
@@ -39,7 +46,12 @@ public class Node : MonoBehaviour
         this.nodeLoop = StartCoroutine(NodeLoop());
         active = true;
     }
+    // TODO: time the operations to make the loopTime accurate
     private IEnumerator NodeLoop() {
+        if (rank > 0) BroadcastLRLC();
+        for (int i = 0; i < neighborCount; i++) {
+            StepRecieveBuffer();
+        }
         yield return new WaitForSeconds(loopTime);
     }
 
@@ -81,11 +93,16 @@ public class Node : MonoBehaviour
         this.firstZeroRow = dimension;
     }
 
-    // TODO: Recieving data from neighboring node and integrate into inventory
-    public void StepRecieveBuffer() {
+    // Dequeues the front item of the recieve-buffer and integrates it into the nodes inventory
+    // TODO: decide if recieved row should be integrated, compute rank
+    private void StepRecieveBuffer() {
         int[] topItem;
-        if (!this.recieveBuffer.TryDequeue(out topItem) || topItem.Length != dimension) return;
-        inventory.WriteRow(firstZeroRow, topItem);
-        firstZeroRow = inventory.FirstZeroRow();
+        if (!this.recieveBuffer.TryDequeue(out topItem) || topItem.Length != this.dimension) return;
+        this.inventory.WriteRow(firstZeroRow, topItem);
+        this.firstZeroRow = inventory.FirstZeroRow();
+    }
+    // Sends a random linear combination of at most log2(dimension)+1 rows from the inventory to all neighbors
+    private void BroadcastLRLC() {
+
     }
 }
