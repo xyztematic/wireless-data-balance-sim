@@ -84,7 +84,6 @@ public class NodeManager : MonoBehaviour
             tempChunkIDs.Add(chunkID);
         }
         for (int i = 0; i < allNodes.Count; i++) {
-
             allNodes[i].GetComponent<Node>().Activate(dimension, nodeLoopTime, nodeRange, tempChunkIDs[i], this);
         }
     }
@@ -93,11 +92,9 @@ public class NodeManager : MonoBehaviour
         switch (setting) {
             case NodeSetting.GRID_X:
                 gridX = (uint)newValue;
-                RebuildNodes();
                 break;
             case NodeSetting.GRID_Y:
                 gridY = (uint)newValue;
-                RebuildNodes();
                 break;
             
             default:
@@ -161,6 +158,11 @@ public class NodeManager : MonoBehaviour
         }
         highlightedNodes.Clear();
         rangeIndicator.transform.localScale = Vector3.zero;
+    }
+
+    public void SetSourceNodeRandomBasis(int x, int y) {
+        int index = y * (int)gridX + x;
+        allNodes[index].GetComponent<Node>().SetRandomBasisInventory();
     }
     void Start() {
         nodePrefab.GetComponent<MeshRenderer>().enabled = false;

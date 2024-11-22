@@ -34,6 +34,9 @@ public class CommandLineParser : MonoBehaviour
             nodeManager.ChangeLayout(TRUE_RANDOM);
             nodeManager.RebuildNodes();
         }
+        else if (parsed[0] == "source" || parsed[0] == "sourcenode") {
+            nodeManager.SetSourceNodeRandomBasis(int.Parse(parsed[1]), int.Parse(parsed[2]));
+        }
         else if (parsed[0] == "i" || parsed[0] == "info") {
             nodeManager.HighlightNode(int.Parse(parsed[1]), int.Parse(parsed[2]));
         }
@@ -43,6 +46,7 @@ public class CommandLineParser : MonoBehaviour
         else if (parsed[0] == "ic" || parsed[0] == "infoc" || parsed[0] == "infoclear") {
             nodeManager.UnhighlightAll();
         }
+        else {print("No command detected!");}
     }
 
     void Start() {

@@ -1016,7 +1016,8 @@ MonoBehaviour:
   gridX: 0
   gridY: 0
   gridDistance: 10
-  nodeLoopTime: 0
+  dimension: 10
+  nodeLoopTime: 1
   nodeRange: 25
   floor: {fileID: 2066384637}
   nodePrefab: {fileID: 429279981}
@@ -1024,6 +1025,7 @@ MonoBehaviour:
   rangeIndicator: {fileID: 1568658187}
   highlightColor1: {r: 1, g: 0, b: 0, a: 1}
   highlightColor2: {r: 1, g: 0, b: 1, a: 1}
+  floorSize: {x: 0, y: 0}
 --- !u!114 &1355791144
 MonoBehaviour:
   m_ObjectHideFlags: 0
