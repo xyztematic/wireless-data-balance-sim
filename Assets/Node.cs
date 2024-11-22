@@ -50,12 +50,15 @@ public class Node : MonoBehaviour
     }
     // TODO: time the operations to make the loopTime accurate
     private IEnumerator NodeLoop() {
-        if (rank > 0) BroadcastLRLC();
-        for (int i = 0; i < neighborCount; i++) {
-            StepRecieveBuffer();
-            HighlightNode(Color.HSVToRGB(0f, rank/dimension, 1f));
+        while (true) {
+            print("NodeLoop iteration started!");
+            if (rank > 0) BroadcastLRLC();
+            for (int i = 0; i < neighborCount; i++) {
+                StepRecieveBuffer();
+                HighlightNode(Color.HSVToRGB(0f, rank/dimension, 1f));
+            }
+            yield return new WaitForSeconds(loopTime);
         }
-        yield return new WaitForSeconds(loopTime);
     }
 
     public void HighlightNode(Color highlightColor) {
@@ -148,6 +151,7 @@ public class Node : MonoBehaviour
             });
 
         }
+        print(toBroadcast);
         foreach (GameObject neighbor in this.neighbors) {
             neighbor.GetComponent<Node>().recieveBuffer.Append(toBroadcast);
         }

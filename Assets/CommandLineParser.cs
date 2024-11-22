@@ -37,6 +37,9 @@ public class CommandLineParser : MonoBehaviour
         else if (parsed[0] == "source" || parsed[0] == "sourcenode") {
             nodeManager.SetSourceNodeRandomBasis(int.Parse(parsed[1]), int.Parse(parsed[2]));
         }
+        else if (parsed[0] == "sourcestd") {
+            nodeManager.SetSourceNodeStandardBasis(int.Parse(parsed[1]), int.Parse(parsed[2]));
+        }
         else if (parsed[0] == "i" || parsed[0] == "info") {
             nodeManager.HighlightNode(int.Parse(parsed[1]), int.Parse(parsed[2]));
         }

@@ -164,6 +164,10 @@ public class NodeManager : MonoBehaviour
         int index = y * (int)gridX + x;
         allNodes[index].GetComponent<Node>().SetRandomBasisInventory();
     }
+    public void SetSourceNodeStandardBasis(int x, int y) {
+        int index = y * (int)gridX + x;
+        allNodes[index].GetComponent<Node>().SetStandardBasisInventory();
+    }
     void Start() {
         nodePrefab.GetComponent<MeshRenderer>().enabled = false;
     }
