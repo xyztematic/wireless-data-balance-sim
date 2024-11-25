@@ -5,6 +5,7 @@ using m4ri;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading.Tasks;
+using static System.String;
 
 public class Node : MonoBehaviour
 {
@@ -41,21 +42,24 @@ public class Node : MonoBehaviour
         neighbors = nodeManager.GetNeighborCandidates(chunkID);
         neighbors.RemoveAll(go => Vector3.Distance(go.transform.position, this.transform.position) > nodeRange);
         neighbors.Remove(gameObject); // This node should not be a neighbor of itself
+        this.neighborCount = neighbors.Count;
         // Initialize empty inventory and reduced matrix
         inventory = new MatrixGF2(this.dimension, this.dimension);
         reducedMatrix = new MatrixGF2(this.dimension, this.dimension);
+        // Initialize the recieve buffer, where incoming data is queued
+        recieveBuffer = new();
         // Start the node loop in a separate thread and mark this node as active
         this.nodeLoop = StartCoroutine(NodeLoop());
-        active = true;
+        this.active = true;
     }
     // TODO: time the operations to make the loopTime accurate
     private IEnumerator NodeLoop() {
+        yield return new WaitForSeconds(Random.Range(0f, 1f));
         while (true) {
-            print("NodeLoop iteration started!");
             if (rank > 0) BroadcastLRLC();
             for (int i = 0; i < neighborCount; i++) {
                 StepRecieveBuffer();
-                HighlightNode(Color.HSVToRGB(0f, rank/dimension, 1f));
+                HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
             }
             yield return new WaitForSeconds(loopTime);
         }
@@ -99,7 +103,7 @@ public class Node : MonoBehaviour
         this.reducedMatrix = copy;
         this.firstZeroRow = dimension;
         this.rank = rank;
-        HighlightNode(Color.HSVToRGB(0f, rank/dimension, 1f));
+        HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
         print("Finished setting random basis inventory!");
     }
     public void SetStandardBasisInventory() {
@@ -108,7 +112,7 @@ public class Node : MonoBehaviour
         this.reducedMatrix = MatrixGF2.Identity(this.dimension);
         this.firstZeroRow = this.dimension;
         this.rank = this.dimension;
-        HighlightNode(Color.HSVToRGB(0f, rank/dimension, 1f));
+        HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
         print("Finished setting standard basis inventory!");
     }
 
@@ -117,10 +121,14 @@ public class Node : MonoBehaviour
     private void StepRecieveBuffer() {
         int[] topItem = new int[this.dimension];
         if (!this.recieveBuffer.TryDequeue(out topItem) || topItem.Length != this.dimension) return;
-        this.inventory.WriteRow(firstZeroRow, topItem);
         this.reducedMatrix.WriteRow(reducedMatrix.FirstZeroRow(), topItem);
+        // If the recieved information is a linear combination of some entries of the inventory, don't save it
+        // TODO: could be more optimal with gauss_from_row
+        int newRank = reducedMatrix.Ref();
+        if (this.rank == newRank) return;
+        this.inventory.WriteRow(firstZeroRow, topItem);
         this.firstZeroRow = this.inventory.FirstZeroRow();
-        this.rank = reducedMatrix.Ref(); // TODO: could be more optimal with gauss_from_row
+        this.rank = newRank;
     }
     // Sends a random linear combination of at most log2(dimension)+1 rows from the inventory to all neighbors
     private void BroadcastLRLC() {
@@ -137,7 +145,7 @@ public class Node : MonoBehaviour
         else {
             List<int> toPickFromIndices = new(Enumerable.Range(0, this.firstZeroRow));
             List<int> pickedRowIndices = new();
-            for (int choices = this.firstZeroRow; choices > 0; choices--) {
+            for (int choices = this.firstZeroRow; choices > this.firstZeroRow - this.logDimension; choices--) {
                 int randomChoice = Random.Range(0, choices);
                 pickedRowIndices.Add(toPickFromIndices[randomChoice]);
                 toPickFromIndices.RemoveAt(randomChoice);
@@ -151,9 +159,8 @@ public class Node : MonoBehaviour
             });
 
         }
-        print(toBroadcast);
         foreach (GameObject neighbor in this.neighbors) {
-            neighbor.GetComponent<Node>().recieveBuffer.Append(toBroadcast);
+            neighbor.GetComponent<Node>().recieveBuffer.Enqueue(toBroadcast);
         }
     }
 }
