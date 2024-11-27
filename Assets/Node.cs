@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading.Tasks;
 using static System.String;
+using System.Threading;
 
 public class Node : MonoBehaviour
 {
@@ -21,18 +22,19 @@ public class Node : MonoBehaviour
     public ConcurrentQueue<int[]> recieveBuffer;
     private Coroutine nodeLoop;
     private MeshRenderer meshRenderer;
-    private int dimension;
-    private int logDimension;
+    private int dimension, logDimension;
+    private int[] toBroadcast;
     private float loopTime, nodeRange;
     private ulong chunkID;
 
     public bool active = false;
 
-    public void Activate(uint dimension, float loopTime, float nodeRange, ulong chunkID, NodeManager nodeManager) {
+    public void Activate(uint dimension, float loopTime, float nodeRange, ulong chunkID, NodeManager nodeManager, bool probe = false) {
         this.dimension = (int) dimension;
         this.logDimension = Mathf.FloorToInt(Mathf.Log(this.dimension, 2f)+1);
         this.firstZeroRow = 0;
         this.rank = 0;
+        toBroadcast = new int[this.dimension];
         this.loopTime = loopTime;
         this.nodeRange = nodeRange;
         this.chunkID = chunkID;
@@ -49,10 +51,11 @@ public class Node : MonoBehaviour
         // Initialize the recieve buffer, where incoming data is queued
         recieveBuffer = new();
         // Start the node loop in a separate thread and mark this node as active
+        if (probe) this.nodeLoop = StartCoroutine(NodeLoopTimed());
         this.nodeLoop = StartCoroutine(NodeLoop());
         this.active = true;
     }
-    // TODO: time the operations to make the loopTime accurate
+    
     private IEnumerator NodeLoop() {
         yield return new WaitForSeconds(Random.Range(0f, 1f));
         while (true) {
@@ -61,6 +64,22 @@ public class Node : MonoBehaviour
                 StepRecieveBuffer();
                 HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
             }
+            yield return new WaitForSeconds(loopTime);
+        }
+    }
+    private IEnumerator NodeLoopTimed() {
+
+        while (true) {
+            float t1 = Time.realtimeSinceStartup;
+            if (rank > 0) BroadcastLRLC();
+            float t2 = Time.realtimeSinceStartup;
+
+            for (int i = 0; i < neighborCount; i++) {
+                StepRecieveBuffer();
+                HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
+            }
+            float t3 = Time.realtimeSinceStartup;
+            print(Mathf.Round((t2 - t1)*1000000) + " " + Mathf.Round((t3 - t2)*1000000));
             yield return new WaitForSeconds(loopTime);
         }
     }
@@ -119,11 +138,11 @@ public class Node : MonoBehaviour
     // Dequeues the front item of the recieve-buffer and integrates it into the nodes inventory
     // TODO: decide if recieved row should be integrated, compute rank
     private void StepRecieveBuffer() {
-        int[] topItem = new int[this.dimension];
+        int[] topItem;
         if (!this.recieveBuffer.TryDequeue(out topItem) || topItem.Length != this.dimension) return;
         this.reducedMatrix.WriteRow(reducedMatrix.FirstZeroRow(), topItem);
         // If the recieved information is a linear combination of some entries of the inventory, don't save it
-        // TODO: could be more optimal with gauss_from_row
+        // TODO: SLOW! Could be more optimal with gauss_from_row or even manual computation
         int newRank = reducedMatrix.Ref();
         if (this.rank == newRank) return;
         this.inventory.WriteRow(firstZeroRow, topItem);
@@ -131,8 +150,8 @@ public class Node : MonoBehaviour
         this.rank = newRank;
     }
     // Sends a random linear combination of at most log2(dimension)+1 rows from the inventory to all neighbors
+    // TODO: Could be faster. Optimize Parallel.For (i.e. by accumulating and %2 or djb)
     private void BroadcastLRLC() {
-        int[] toBroadcast = new int[this.dimension];
         if (this.firstZeroRow < this.logDimension) {
             Parallel.For(0, this.dimension, (x) => {
                 int write = 0;
@@ -141,6 +160,7 @@ public class Node : MonoBehaviour
                 }
                 toBroadcast[x] = write;
             });
+            
         }
         else {
             List<int> toPickFromIndices = new(Enumerable.Range(0, this.firstZeroRow));

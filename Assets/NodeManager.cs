@@ -57,7 +57,6 @@ public class NodeManager : MonoBehaviour
         // Reposition all nodes, add them to the chunk dictionary and activate them after
         float y = nodePrefab.transform.position.y;
         List<ulong> tempChunkIDs = new(allNodes.Count);
-        print(currentLayout);
         for (int i = 0; i < allNodes.Count; i++) {
             Vector3 newPosition;
             switch (currentLayout) {
@@ -84,7 +83,7 @@ public class NodeManager : MonoBehaviour
             tempChunkIDs.Add(chunkID);
         }
         for (int i = 0; i < allNodes.Count; i++) {
-            allNodes[i].GetComponent<Node>().Activate(dimension, nodeLoopTime, nodeRange, tempChunkIDs[i], this);
+            allNodes[i].GetComponent<Node>().Activate(dimension, nodeLoopTime, nodeRange, tempChunkIDs[i], this, i == allNodes.Count/2);
         }
     }
     

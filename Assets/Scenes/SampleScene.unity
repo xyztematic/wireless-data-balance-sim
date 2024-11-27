@@ -1000,7 +1000,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ca643060cc9f80bc9bfe4082dcfb919, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  framerateCap: 60
+  framerateCap: 144
 --- !u!114 &1355791143
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1016,7 +1016,7 @@ MonoBehaviour:
   gridX: 0
   gridY: 0
   gridDistance: 10
-  dimension: 100
+  dimension: 1000
   nodeLoopTime: 1
   nodeRange: 12
   floor: {fileID: 2066384637}
