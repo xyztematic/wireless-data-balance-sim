@@ -1,20 +1,23 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class NodeManager : MonoBehaviour
 {
     public uint gridX, gridY, gridDistance, dimension;
+    public Vector2Int coverageTextureSize;
     public float nodeLoopTime, nodeRange;
     public GameObject floor, nodePrefab, nodeParent, rangeIndicator;
     public Dictionary<ulong, List<GameObject>> chunkLookup = new();
     public Color highlightColor1 = Color.red, highlightColor2 = Color.magenta;
-    public Vector2 floorSize;
 
     private readonly ulong yBitOffset = 0x00000001_00000000ul;
     private const float SQRT3OVER2 = 0.866025404f;
     private LayoutMode currentLayout = LayoutMode.GRID_SQUARE;
     private List<GameObject> allNodes = new();
     private List<GameObject> highlightedNodes = new();
+    private CS_Dispatcher csDispatcher;
+    private Coroutine coverageUpdater;
 
     public enum NodeSetting {
         GRID_X,
@@ -70,7 +73,7 @@ public class NodeManager : MonoBehaviour
                     newPosition = gridDistance * new Vector3((i % gridX)+((i/gridX)%2)/2f, y / gridDistance, i / gridX * SQRT3OVER2);
                     break;
                 case LayoutMode.TRUE_RANDOM:
-                    newPosition = gridDistance * new Vector3(gridX*Random.value, y / gridDistance, gridY*Random.value);
+                    newPosition = gridDistance * new Vector3(gridX*UnityEngine.Random.value, y / gridDistance, gridY*UnityEngine.Random.value);
                     break;
                 default:
                     newPosition = Vector3.zero;
@@ -88,6 +91,10 @@ public class NodeManager : MonoBehaviour
         for (int i = 0; i < allNodes.Count; i++) {
             allNodes[i].GetComponent<Node>().Activate(dimension, nodeLoopTime, nodeRange, tempChunkIDs[i], this, i == allNodes.Count/2);
         }
+
+        // Kick off the Thread to update coverage visibility
+        if (coverageUpdater != null) StopCoroutine(coverageUpdater);
+        coverageUpdater = StartCoroutine(UpdateCoverage());
     }
     
     public void ChangeSetting(NodeSetting setting, int newValue) {
@@ -170,7 +177,20 @@ public class NodeManager : MonoBehaviour
         int index = y * (int)gridX + x;
         allNodes[index].GetComponent<Node>().SetStandardBasisInventory();
     }
+
+    public IEnumerator UpdateCoverage() {
+        while (true) {
+            print("Updating Coverage");
+            csDispatcher.Dispatch(dimension, nodeRange, floor.transform.localScale.x, floor.transform.localScale.y,
+                coverageTextureSize.x, coverageTextureSize.y, floor, this);
+            yield return new WaitForSeconds(10f);
+        }
+    }
+    
     void Start() {
+        // Hides the dummy node prefab
         nodePrefab.GetComponent<MeshRenderer>().enabled = false;
+        // Get the CS_Dispatcher instance
+        csDispatcher = GetComponent<CS_Dispatcher>();
     }
 }

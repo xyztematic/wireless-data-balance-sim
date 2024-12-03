@@ -12,10 +12,10 @@ public class Node : MonoBehaviour
     private List<GameObject> neighbors;
     private int neighborCount;
     // Inventory of this node, represented as a bit-matrix of size "dimension"
-    private MatrixGF2 inventory;
+    public MatrixGF2 inventory;
     private int firstZeroRow;
-    private MatrixGF2 reducedMatrix;
-    private int rank;
+    public MatrixGF2 reducedMatrix;
+    public int rank;
     // Stores incoming data sent from neighboring nodes in a thread-safe queue for later processing
     public ConcurrentQueue<int[]> recieveBuffer;
     private Coroutine nodeLoop;
