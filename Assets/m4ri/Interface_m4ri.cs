@@ -35,4 +35,7 @@ public class Interface_m4ri
     public static extern int mzd_echelonize_m4ri(IntPtr M, int full_if_one, int k = 0);
     [DllImport("libm4ri-0.0.20200125.so")]
     public static extern IntPtr mzd_submatrix(IntPtr S, IntPtr M, int start_row, int start_col, int end_row, int end_col);
+    [DllImport("libm4ri-0.0.20200125.so")]
+    public static extern IntPtr mzd_stack(IntPtr dest, IntPtr M1, IntPtr M2);
+
 }

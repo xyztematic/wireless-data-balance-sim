@@ -1016,7 +1016,7 @@ MonoBehaviour:
   gridX: 0
   gridY: 0
   gridDistance: 10
-  dimension: 1000
+  dimension: 10
   nodeLoopTime: 1
   nodeRange: 12
   floor: {fileID: 2066384637}

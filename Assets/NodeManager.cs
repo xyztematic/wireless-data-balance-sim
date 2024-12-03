@@ -32,6 +32,9 @@ public class NodeManager : MonoBehaviour
         chunkID += ((ulong) Mathf.FloorToInt(worldPos.z / nodeRange)) * yBitOffset;
         return chunkID;
     }
+    public ulong ChunkID(float xWorldPos, float zWorldPos) {
+        return (ulong) Mathf.FloorToInt(xWorldPos / nodeRange) + ((ulong) Mathf.FloorToInt(zWorldPos / nodeRange)) * yBitOffset;
+    }
     public void RebuildNodes() {
         UnhighlightAll();
         chunkLookup.Clear();

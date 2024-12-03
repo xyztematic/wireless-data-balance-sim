@@ -1,16 +1,27 @@
 #pragma kernel CSMain
 
 RWTexture2D<float4> Result;
-//StructuredBuffer<float3> NodePosAndRanges;
+StructuredBuffer<float2> NodePositions;
+int NodeCount;
+float NodeRange;
+float FloorSizeX, FloorSizeY;
 
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    //if (id.x >= NodePosAndRanges.Length) return;
-    //float3 nodeData = NodePosAndRanges[id.x];
     uint renderTexWidth, renderTexHeight;
     Result.GetDimensions(renderTexWidth, renderTexHeight);
-    float2 idf = float2(id.x, id.y);
+    float2 posInWorldSpace = float2(FloorSizeX / renderTexWidth * id.x, FloorSizeY / renderTexHeight * id.y);
+    int j = 0;
+    ulong nodeCoverageID = 0;
+    // Compute the lowest indices that correspond to nodes covering this point (max. 4 nodes)
+    for (int i = 0; i < NodeCount; i++) {
+        if (distance(posInWorldSpace, NodePositions[i]) < NodeRange) {
+            nodeCoverageID |= (i << (16 * j));
+            if (j++ >= 4) break;
+        }
+    }
+    
     Result[id.xy] = float4(idf.x / renderTexWidth, idf.y / renderTexHeight, 0.0, 0.0);
 
 }

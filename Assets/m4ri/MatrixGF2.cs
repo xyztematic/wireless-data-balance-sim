@@ -118,6 +118,14 @@ namespace m4ri {
             }
             return new MatrixGF2(rowEnd - rowStart, colEnd - colStart, mzd_submatrix(IntPtr.Zero, headPtr, rowStart, colStart, rowEnd, colEnd));
         }
+        // Stacks two matrices on top of each other and writes the result to a newly allocated matrix
+        public MatrixGF2 StackOnto(MatrixGF2 toStackOnto) {
+            if (this.ncols != toStackOnto.ncols) {
+                Debug.LogError("Tried to stack matrices of different width (columns)");
+                return null;
+            }
+            return new MatrixGF2(this.nrows, this.ncols, mzd_stack(IntPtr.Zero, headPtr, toStackOnto.headPtr));
+        }
         // Returns the index of the first full zero row. If there is none, return amount of rows
         public int FirstZeroRow() {
             return mzd_first_zero_row(headPtr);
