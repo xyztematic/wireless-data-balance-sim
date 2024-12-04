@@ -77,7 +77,7 @@ public class Node : MonoBehaviour
                 HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
             }
             float t3 = Time.realtimeSinceStartup;
-            print(Mathf.Round((t2 - t1)*1000000) + " " + Mathf.Round((t3 - t2)*1000000));
+            //print(Mathf.Round((t2 - t1)*1000000) + " " + Mathf.Round((t3 - t2)*1000000));
             yield return new WaitForSeconds(loopTime);
         }
     }
@@ -142,10 +142,15 @@ public class Node : MonoBehaviour
         // If the recieved information is a linear combination of some entries of the inventory, don't save it
         // TODO: SLOW! Could be more optimal with gauss_from_row or even manual computation
         int newRank = reducedMatrix.Ref();
-        if (this.rank == newRank) return;
+        if (this.rank == newRank) {
+            //print(reducedMatrix.ToString());
+            //print(firstZeroRow);
+            return;
+        }
         this.inventory.WriteRow(firstZeroRow, topItem);
         this.firstZeroRow = this.inventory.FirstZeroRow();
         this.rank = newRank;
+        //print(this.rank);
     }
     // Sends a random linear combination of at most log2(dimension)+1 rows from the inventory to all neighbors
     // TODO: Could be faster. Optimize Parallel.For (i.e. by accumulating and %2 or djb)

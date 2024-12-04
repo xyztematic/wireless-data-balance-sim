@@ -1015,10 +1015,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gridX: 0
-  gridY: 0
+  gridZ: 0
   gridDistance: 10
-  dimension: 10
-  coverageTextureSize: {x: 100, y: 100}
+  dimension: 20
+  coverageTextureSize: {x: 50, y: 50}
   nodeLoopTime: 1
   nodeRange: 12
   floor: {fileID: 2066384637}

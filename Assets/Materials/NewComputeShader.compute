@@ -7,6 +7,11 @@ int ResultWidth, ResultHeight, MaxRank;
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    uint currRank = RankData[id.x + id.y * ResultWidth];
-    Result[id.xy] = float4(currRank / MaxRank, currRank / MaxRank, 1.0, 0.0);
+    int index = id.x + id.y * ResultWidth;
+    if (index > ResultWidth * ResultHeight) {
+        Result[id.xy] = float4(1.0, 1.0, 1.0, 0.0);
+        return;
+    }
+    float coverage = (float) RankData[index] / MaxRank;
+    Result[id.xy] = float4(1.0 - coverage, coverage, 0.0, 0.0);
 }

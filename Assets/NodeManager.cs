@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class NodeManager : MonoBehaviour
 {
-    public uint gridX, gridY, gridDistance, dimension;
+    public uint gridX, gridZ, gridDistance, dimension;
     public Vector2Int coverageTextureSize;
     public float nodeLoopTime, nodeRange;
     public GameObject floor, nodePrefab, nodeParent, rangeIndicator;
@@ -42,7 +42,7 @@ public class NodeManager : MonoBehaviour
         UnhighlightAll();
         chunkLookup.Clear();
         Transform parentTransform = nodeParent.transform;
-        int diff = (int) (gridX*gridY) - allNodes.Count;
+        int diff = (int) (gridX*gridZ) - allNodes.Count;
 
         if (diff > 0) {
             // Add nodes since more are needed
@@ -62,6 +62,8 @@ public class NodeManager : MonoBehaviour
         }
         // Reposition all nodes, add them to the chunk dictionary and activate them after
         float y = nodePrefab.transform.position.y;
+        Vector2 nodeBoundsX = new Vector2(gridX * gridDistance, 0);
+        Vector2 nodeBoundsZ = new Vector2(gridZ * gridDistance, 0);
         List<ulong> tempChunkIDs = new(allNodes.Count);
         for (int i = 0; i < allNodes.Count; i++) {
             Vector3 newPosition;
@@ -73,13 +75,19 @@ public class NodeManager : MonoBehaviour
                     newPosition = gridDistance * new Vector3((i % gridX)+((i/gridX)%2)/2f, y / gridDistance, i / gridX * SQRT3OVER2);
                     break;
                 case LayoutMode.TRUE_RANDOM:
-                    newPosition = gridDistance * new Vector3(gridX*UnityEngine.Random.value, y / gridDistance, gridY*UnityEngine.Random.value);
+                    newPosition = gridDistance * new Vector3(gridX*UnityEngine.Random.value, y / gridDistance, gridZ*UnityEngine.Random.value);
                     break;
                 default:
                     newPosition = Vector3.zero;
                     break;
             }
             allNodes[i].transform.position = newPosition;
+
+            if (newPosition.x < nodeBoundsX[0]) nodeBoundsX[0] = newPosition.x;
+            else if (newPosition.x > nodeBoundsX[1]) nodeBoundsX[1] = newPosition.x;
+            if (newPosition.z < nodeBoundsZ[0]) nodeBoundsZ[0] = newPosition.z;
+            else if (newPosition.z > nodeBoundsZ[1]) nodeBoundsZ[1] = newPosition.z;
+
 
             ulong chunkID = ChunkID(newPosition);
             if (!chunkLookup.ContainsKey(chunkID)) {
@@ -91,7 +99,12 @@ public class NodeManager : MonoBehaviour
         for (int i = 0; i < allNodes.Count; i++) {
             allNodes[i].GetComponent<Node>().Activate(dimension, nodeLoopTime, nodeRange, tempChunkIDs[i], this, i == allNodes.Count/2);
         }
-
+        // Update the floor object to fit the size of the new network
+        // NOTE: localScale y and z is swapped, because the plane is rotated
+        // TODO: wrong sizing
+        floor.transform.localScale = new Vector3(nodeBoundsX[1] - nodeBoundsX[0], nodeBoundsZ[1] - nodeBoundsZ[0], 1f);
+        floor.transform.localScale *= 1.01f;
+        floor.transform.position = new Vector3(floor.transform.localScale.x / 2f + nodeBoundsX[0], 0f, floor.transform.localScale.y / 2f + nodeBoundsX[0]);
         // Kick off the Thread to update coverage visibility
         if (coverageUpdater != null) StopCoroutine(coverageUpdater);
         coverageUpdater = StartCoroutine(UpdateCoverage());
@@ -103,7 +116,7 @@ public class NodeManager : MonoBehaviour
                 gridX = (uint)newValue;
                 break;
             case NodeSetting.GRID_Y:
-                gridY = (uint)newValue;
+                gridZ = (uint)newValue;
                 break;
             
             default:
@@ -181,9 +194,9 @@ public class NodeManager : MonoBehaviour
     public IEnumerator UpdateCoverage() {
         while (true) {
             print("Updating Coverage");
-            csDispatcher.Dispatch(dimension, nodeRange, floor.transform.localScale.x, floor.transform.localScale.y,
+            csDispatcher.Dispatch(dimension, nodeRange, 6, floor.transform.localScale.x, floor.transform.localScale.y,
                 coverageTextureSize.x, coverageTextureSize.y, floor, this);
-            yield return new WaitForSeconds(10f);
+            yield return new WaitForSeconds(nodeLoopTime);
         }
     }
     
