@@ -1017,8 +1017,8 @@ MonoBehaviour:
   gridX: 0
   gridZ: 0
   gridDistance: 10
-  dimension: 20
-  coverageTextureSize: {x: 50, y: 50}
+  dimension: 30
+  coverageTextureSize: {x: 100, y: 100}
   nodeLoopTime: 1
   nodeRange: 12
   floor: {fileID: 2066384637}

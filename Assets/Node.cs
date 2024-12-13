@@ -48,8 +48,6 @@ public class Node : MonoBehaviour
         reducedMatrix = new MatrixGF2(this.dimension, this.dimension);
         // Initialize the recieve buffer, where incoming data is queued
         recieveBuffer = new();
-        // Start the node loop in a separate thread and mark this node as active
-        if (probe) this.nodeLoop = StartCoroutine(NodeLoopTimed());
         this.nodeLoop = StartCoroutine(NodeLoop());
         this.active = true;
     }
@@ -57,11 +55,20 @@ public class Node : MonoBehaviour
     private IEnumerator NodeLoop() {
         yield return new WaitForSeconds(Random.Range(0f, 1f));
         while (true) {
-            if (rank > 0) BroadcastLRLC();
-            for (int i = 0; i < neighborCount; i++) {
-                StepRecieveBuffer();
+            if (rank <= dimension / neighborCount + 1) {
+                for (int i = 0; i < neighborCount; i++) {
+                    StepRecieveBuffer();
+                    HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
+                }
+            }
+            else if (rank < dimension) {
+                StepRecieveBuffer(overwriteMode: true);
                 HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
             }
+            
+            if (rank > 0 && rank <= dimension / neighborCount + 1 || rank == dimension) BroadcastLRLC();
+            else BroadcastLRLC(fastForwardMode: true);
+            
             yield return new WaitForSeconds(loopTime);
         }
     }
@@ -135,26 +142,33 @@ public class Node : MonoBehaviour
 
     // Dequeues the front item of the recieve-buffer and integrates it into the nodes inventory
     // TODO: decide if recieved row should be integrated, compute rank
-    private void StepRecieveBuffer() {
+    private void StepRecieveBuffer(bool overwriteMode = false) {
         int[] topItem;
+        int rowToOverwrite = Random.Range(0, inventory.FirstZeroRow());
         if (!this.recieveBuffer.TryDequeue(out topItem) || topItem.Length != this.dimension) return;
-        this.reducedMatrix.WriteRow(reducedMatrix.FirstZeroRow(), topItem);
+        if (overwriteMode)
+            this.reducedMatrix.WriteRow(rowToOverwrite, topItem);
+        else
+            this.reducedMatrix.WriteRow(reducedMatrix.FirstZeroRow(), topItem);
         // If the recieved information is a linear combination of some entries of the inventory, don't save it
         // TODO: SLOW! Could be more optimal with gauss_from_row or even manual computation
         int newRank = reducedMatrix.Ref();
-        if (this.rank == newRank) {
+        if (this.rank == newRank && !overwriteMode) {
             //print(reducedMatrix.ToString());
             //print(firstZeroRow);
             return;
         }
-        this.inventory.WriteRow(firstZeroRow, topItem);
+        if (overwriteMode)
+            this.inventory.WriteRow(rowToOverwrite, topItem);
+        else
+            this.inventory.WriteRow(firstZeroRow, topItem);
         this.firstZeroRow = this.inventory.FirstZeroRow();
         this.rank = newRank;
         //print(this.rank);
     }
     // Sends a random linear combination of at most log2(dimension)+1 rows from the inventory to all neighbors
     // TODO: Could be faster. Optimize Parallel.For (i.e. by accumulating and %2 or djb)
-    private void BroadcastLRLC() {
+    private void BroadcastLRLC(bool fastForwardMode = false) {
         if (this.firstZeroRow < this.logDimension) {
             Parallel.For(0, this.dimension, (x) => {
                 int write = 0;
@@ -173,6 +187,9 @@ public class Node : MonoBehaviour
                 pickedRowIndices.Add(toPickFromIndices[randomChoice]);
                 toPickFromIndices.RemoveAt(randomChoice);
             }
+            // Include information in overridable fast forward row
+            if (fastForwardMode && !pickedRowIndices.Contains(0)) pickedRowIndices.Add(0);
+
             Parallel.For(0, this.dimension, (x) => {
                 int write = 0;
                 foreach (int i in pickedRowIndices) {
