@@ -16,7 +16,7 @@ public class NodeManager : MonoBehaviour
     private LayoutMode currentLayout = LayoutMode.GRID_SQUARE;
     private List<GameObject> allNodes = new();
     private List<GameObject> highlightedNodes = new();
-    private CS_Dispatcher csDispatcher;
+    private CoverageCalculator coverageCalculator;
     private Coroutine coverageUpdater;
 
     public enum NodeSetting {
@@ -192,10 +192,14 @@ public class NodeManager : MonoBehaviour
     }
 
     public IEnumerator UpdateCoverage() {
+        int timeStep = 0;
         while (true) {
             print("Updating Coverage");
-            csDispatcher.Dispatch(dimension, nodeRange, 6, floor.transform.localScale.x, floor.transform.localScale.y,
+            int[] coverageData = coverageCalculator.CalculateCoverage(dimension, nodeRange, 6, floor.transform.localScale.x, floor.transform.localScale.y,
                 coverageTextureSize.x, coverageTextureSize.y, floor, this);
+            
+            SimulationMetrics.WriteToFile(SimulationMetrics.Metrics.ALL, timeStep, coverageData);
+            
             yield return new WaitForSeconds(nodeLoopTime);
         }
     }
@@ -204,6 +208,6 @@ public class NodeManager : MonoBehaviour
         // Hides the dummy node prefab
         nodePrefab.GetComponent<MeshRenderer>().enabled = false;
         // Get the CS_Dispatcher instance
-        csDispatcher = GetComponent<CS_Dispatcher>();
+        coverageCalculator = GetComponent<CoverageCalculator>();
     }
 }

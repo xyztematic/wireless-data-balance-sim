@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using m4ri;
 
-public class CS_Dispatcher : MonoBehaviour
+public class CoverageCalculator : MonoBehaviour
 {
     public ComputeShader cs;
     public RenderTexture rt;
@@ -10,9 +10,8 @@ public class CS_Dispatcher : MonoBehaviour
     private ComputeBuffer rankDataBuffer;
     private int[] ranks;
 
-    public void Dispatch(uint dimension, float nodeRange, int maxNeighborsToLookAt, float floorSizeX, float floorSizeZ, int pixelX, int pixelZ, GameObject floor, NodeManager nodeManager)
+    public int[] CalculateCoverage(uint dimension, float nodeRange, int maxNeighborsToLookAt, float floorSizeX, float floorSizeZ, int pixelX, int pixelZ, GameObject floor, NodeManager nodeManager)
     {
-        int kernel = cs.FindKernel("CSMain");
         if (ranks == null || ranks.Length != pixelX*pixelZ) ranks = new int[pixelX*pixelZ];
         rankLookup.Clear();
         float stepX = floorSizeX / pixelX, stepZ = floorSizeZ / pixelZ;
@@ -55,7 +54,10 @@ public class CS_Dispatcher : MonoBehaviour
             }
             iZ++;
         }
-        //for (int i = 0; i < pixelX; i++) print(ranks[i]);
+        
+        // Setup the buffer and inputs for the compute shader, that displays the coverage data
+
+        int kernel = cs.FindKernel("CSMain");
         if (rt.width != pixelX || rt.height != pixelZ) rt = new RenderTexture(pixelX, pixelZ, 0);
         rt.enableRandomWrite = true;
         floor.GetComponent<MeshRenderer>().material.mainTexture = rt;
@@ -70,7 +72,7 @@ public class CS_Dispatcher : MonoBehaviour
         rankDataBuffer.SetData(ranks);
         cs.SetBuffer(kernel, "RankData", rankDataBuffer);
         cs.Dispatch(kernel, Mathf.CeilToInt(rt.width / 8f), Mathf.CeilToInt(rt.height / 8f), 1);
-        
+        return ranks;
     }
     
     void OnDestroy() {

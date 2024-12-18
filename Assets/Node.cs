@@ -53,7 +53,7 @@ public class Node : MonoBehaviour
     }
     
     private IEnumerator NodeLoop() {
-        yield return new WaitForSeconds(Random.Range(0f, 1f));
+        //yield return new WaitForSeconds(Random.Range(0f, 1f));
         while (true) {
             if (rank <= dimension / neighborCount + 1) {
                 for (int i = 0; i < neighborCount; i++) {
@@ -200,7 +200,9 @@ public class Node : MonoBehaviour
 
         }
         foreach (GameObject neighbor in this.neighbors) {
-            neighbor.GetComponent<Node>().recieveBuffer.Enqueue(toBroadcast);
+            neighbor.TryGetComponent<Node>(out Node n);
+            if (n == null || n.recieveBuffer == null) continue;
+            n.recieveBuffer.Enqueue(toBroadcast);
         }
     }
 }
