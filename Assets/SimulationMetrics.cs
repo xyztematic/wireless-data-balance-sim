@@ -23,7 +23,7 @@ public static class SimulationMetrics
 
         string filePath = Path.Combine(directoryPath, fileName);
         string lineToWrite = "\n"+timeStep;
-        lineToWrite += ","+ComputeMetric(Metrics.ShareOfFullyCovered, coverageData, dimension);
+        lineToWrite += ","+(""+ComputeMetric(Metrics.ShareOfFullyCovered, coverageData, dimension)).Replace(',','.');
         File.AppendAllText(filePath, lineToWrite);
         Debug.Log("File written at: " + filePath);
     }
