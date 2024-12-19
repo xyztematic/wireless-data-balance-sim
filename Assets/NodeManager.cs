@@ -198,7 +198,7 @@ public class NodeManager : MonoBehaviour
             int[] coverageData = coverageCalculator.CalculateCoverage(dimension, nodeRange, 6, floor.transform.localScale.x, floor.transform.localScale.y,
                 coverageTextureSize.x, coverageTextureSize.y, floor, this);
             
-            SimulationMetrics.WriteToFile(SimulationMetrics.Metrics.ALL, timeStep, coverageData);
+            SimulationMetrics.WriteToFile(timeStep, coverageData, dimension);
             
             yield return new WaitForSeconds(nodeLoopTime);
         }
