@@ -53,7 +53,7 @@ public class Node : MonoBehaviour
     }
     
     private IEnumerator NodeLoop() {
-        //yield return new WaitForSeconds(Random.Range(0f, 1f));
+        yield return new WaitForSeconds(Random.Range(0f, loopTime));
         while (true) {
             if (rank <= dimension / neighborCount + 1) {
                 for (int i = 0; i < neighborCount; i++) {

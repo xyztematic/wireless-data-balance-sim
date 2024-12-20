@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using static NodeManager.NodeSetting;
 using static NodeManager.LayoutMode;
+using System.Diagnostics;
 
 public class CommandLineParser : MonoBehaviour
 {
@@ -12,51 +13,82 @@ public class CommandLineParser : MonoBehaviour
     private InputField _inputField;
 
     void Parse(string command) {
-        Debug.Log("CMD: "+command);
+        print("CMD: "+command);
         command = command.ToLower();
         if (command.Length < 1) return;
         string[] parsed = command.Split(' ');
-        if (parsed[0] == "g" || parsed[0] == "grid" || parsed[0] == "squaregrid") {
-            nodeManager.ChangeSetting(GRID_X, int.Parse(parsed[1]));
-            nodeManager.ChangeSetting(GRID_Y, int.Parse(parsed[2]));
-            nodeManager.ChangeLayout(GRID_SQUARE);
-            nodeManager.RebuildNodes();
+        int i = 0;
+        while (i < parsed.Length) {
+            if (parsed[i] == "g" || parsed[i] == "grid" || parsed[i] == "squaregrid") {
+                nodeManager.ChangeSetting(GRID_X, int.Parse(parsed[i+1]));
+                nodeManager.ChangeSetting(GRID_Y, int.Parse(parsed[i+2]));
+                nodeManager.ChangeLayout(GRID_SQUARE);
+                nodeManager.RebuildNodes();
+                i+=3;
+            }
+            else if (parsed[i] == "h" || parsed[i] == "hex" || parsed[i] == "hexgrid") {
+                nodeManager.ChangeSetting(GRID_X, int.Parse(parsed[i+1]));
+                nodeManager.ChangeSetting(GRID_Y, int.Parse(parsed[i+2]));
+                nodeManager.ChangeLayout(GRID_HEX);
+                nodeManager.RebuildNodes();
+                i+=3;
+            }
+            else if (parsed[i] == "r" || parsed[i] == "random" || parsed[i] == "randomgrid") {
+                nodeManager.ChangeSetting(GRID_X, int.Parse(parsed[i+1]));
+                nodeManager.ChangeSetting(GRID_Y, int.Parse(parsed[i+2]));
+                nodeManager.ChangeLayout(TRUE_RANDOM);
+                nodeManager.RebuildNodes();
+                i+=3;
+            }
+            else if (parsed[i] == "source" || parsed[i] == "sourcenode") {
+                nodeManager.SetSourceNodeRandomBasis(int.Parse(parsed[i+1]), int.Parse(parsed[i+2]));
+                i+=3;
+            }
+            else if (parsed[i] == "sourcestd") {
+                nodeManager.SetSourceNodeStandardBasis(int.Parse(parsed[i+1]), int.Parse(parsed[i+2]));
+                i+=3;
+            }
+            else if (parsed[i] == "i" || parsed[i] == "info") {
+                nodeManager.HighlightNode(int.Parse(parsed[i+1]), int.Parse(parsed[i+2]));
+                i+=3;
+            }
+            else if (parsed[i] == "in" || parsed[i] == "infon" || parsed[i] == "infoneighbor") {
+                nodeManager.HighlightNode(int.Parse(parsed[i+1]), int.Parse(parsed[i+2]), true);
+                i+=3;
+            }
+            else if (parsed[i] == "ic" || parsed[i] == "infoc" || parsed[i] == "infoclear") {
+                nodeManager.UnhighlightAll();
+                i+=1;
+            }
+            else if (parsed[i] == "saveto" || parsed[i] == "save") {
+                nodeManager.saveFilename = parsed[i+1].Replace(".","").Replace("/","");
+                nodeManager.saveSimData = true;
+                i+=2;
+            }
+            else if (parsed[i] == "stop" || parsed[i] == "end") {
+                nodeManager.saveSimData = false;
+                nodeManager.ChangeSetting(GRID_X, 0);
+                nodeManager.ChangeSetting(GRID_Y, 0);
+                nodeManager.ChangeLayout(GRID_SQUARE);
+                nodeManager.RebuildNodes();
+                ProcessStartInfo start = new ProcessStartInfo("/usr/bin/python3", Application.dataPath+"/Python/graphSimData.py "+Application.persistentDataPath+"/Recordings/"+nodeManager.saveFilename);
+                start.UseShellExecute = false;
+                Process process = Process.Start(start);
+                break;
+            }
+            else {
+                print("No command detected!");
+                break;
+            }
+            
         }
-        else if (parsed[0] == "h" || parsed[0] == "hex" || parsed[0] == "hexgrid") {
-            nodeManager.ChangeSetting(GRID_X, int.Parse(parsed[1]));
-            nodeManager.ChangeSetting(GRID_Y, int.Parse(parsed[2]));
-            nodeManager.ChangeLayout(GRID_HEX);
-            nodeManager.RebuildNodes();
-        }
-        else if (parsed[0] == "r" || parsed[0] == "random" || parsed[0] == "randomgrid") {
-            nodeManager.ChangeSetting(GRID_X, int.Parse(parsed[1]));
-            nodeManager.ChangeSetting(GRID_Y, int.Parse(parsed[2]));
-            nodeManager.ChangeLayout(TRUE_RANDOM);
-            nodeManager.RebuildNodes();
-        }
-        else if (parsed[0] == "source" || parsed[0] == "sourcenode") {
-            nodeManager.SetSourceNodeRandomBasis(int.Parse(parsed[1]), int.Parse(parsed[2]));
-        }
-        else if (parsed[0] == "sourcestd") {
-            nodeManager.SetSourceNodeStandardBasis(int.Parse(parsed[1]), int.Parse(parsed[2]));
-        }
-        else if (parsed[0] == "i" || parsed[0] == "info") {
-            nodeManager.HighlightNode(int.Parse(parsed[1]), int.Parse(parsed[2]));
-        }
-        else if (parsed[0] == "in" || parsed[0] == "infon" || parsed[0] == "infoneighbor") {
-            nodeManager.HighlightNode(int.Parse(parsed[1]), int.Parse(parsed[2]), true);
-        }
-        else if (parsed[0] == "ic" || parsed[0] == "infoc" || parsed[0] == "infoclear") {
-            nodeManager.UnhighlightAll();
-        }
-        else {print("No command detected!");}
     }
 
     void Start() {
         runtimeScripts = GameObject.FindGameObjectWithTag("Runtime Scripts");
         nodeManager = runtimeScripts.GetComponent<NodeManager>();
         if (nodeManager == null) {
-            Debug.LogError("NodeManager not found, Command Line Disabled!");
+            UnityEngine.Debug.LogError("NodeManager not found, Command Line Disabled!");
             return;
         }
 
@@ -71,7 +103,7 @@ public class CommandLineParser : MonoBehaviour
         _inputField.interactable = false;
 
         cameraController = cameraObj.GetComponent<CameraController>();
-        if (cameraController == null) Debug.LogError("CameraController not found!");
+        if (cameraController == null) UnityEngine.Debug.LogError("CameraController not found!");
     }
 
     void Update() {

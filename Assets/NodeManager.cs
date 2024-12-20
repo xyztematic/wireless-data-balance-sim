@@ -10,6 +10,8 @@ public class NodeManager : MonoBehaviour
     public GameObject floor, nodePrefab, nodeParent, rangeIndicator;
     public Dictionary<ulong, List<GameObject>> chunkLookup = new();
     public Color highlightColor1 = Color.red, highlightColor2 = Color.magenta;
+    public string saveFilename = "simdata_test";
+    public bool saveSimData = false;
 
     private readonly ulong yBitOffset = 0x00000001_00000000ul;
     private const float SQRT3OVER2 = 0.866025404f;
@@ -107,7 +109,7 @@ public class NodeManager : MonoBehaviour
         floor.transform.position = new Vector3(floor.transform.localScale.x / 2f + nodeBoundsX[0], 0f, floor.transform.localScale.y / 2f + nodeBoundsX[0]);
         // Kick off the Thread to update coverage visibility
         if (coverageUpdater != null) StopCoroutine(coverageUpdater);
-        coverageUpdater = StartCoroutine(UpdateCoverage());
+        if (allNodes.Count > 0) coverageUpdater = StartCoroutine(UpdateCoverage());
     }
     
     public void ChangeSetting(NodeSetting setting, int newValue) {
@@ -198,7 +200,7 @@ public class NodeManager : MonoBehaviour
             int[] coverageData = coverageCalculator.CalculateCoverage(dimension, nodeRange, 6, floor.transform.localScale.x, floor.transform.localScale.y,
                 coverageTextureSize.x, coverageTextureSize.y, floor, this);
             
-            SimulationMetrics.WriteToFile(timeStep, coverageData, dimension);
+            if (saveSimData) SimulationMetrics.WriteToFile(timeStep, coverageData, dimension, saveFilename);
             
             yield return new WaitForSeconds(nodeLoopTime);
         }

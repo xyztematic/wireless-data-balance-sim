@@ -1,23 +1,28 @@
 import matplotlib.pyplot as plt
 import csv
-import getpass
+import sys
 
 def main():
-    filename = "/home/"+getpass.getuser()+"/.config/unity3d/DefaultCompany/BA/Recordings/simdata_test"
+    print("(python) setting up data display")
+    if len(sys.argv) <= 1:
+        print("(python) too few arguments")
+        return
+    filename = sys.argv[1]
     x = []
     y = []
 
     with open(filename, 'r') as csvfile:
         csvreader = csv.reader(csvfile)
-        for line_number, row in enumerate(csvreader, start=1):
+        for line_number, row in enumerate(csvreader, start=0):
             if row:
                 x.append(line_number)
                 y.append(float(row[1]))
 
     plt.plot(x, y)
-    plt.xlabel('# transmissions per node')
+    plt.xlabel('transmissions per node')
     plt.ylabel('proportion of fully covered area')
-    plt.title('Proportion of area that is fully covered in a 10x10 square grid network')
+    plt.ylim((0.0, 1.0))
+    plt.title('Proportion of area that is fully covered')
     plt.grid(True)
     plt.show()
 
