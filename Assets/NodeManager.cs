@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class NodeManager : MonoBehaviour
@@ -193,14 +194,33 @@ public class NodeManager : MonoBehaviour
         allNodes[index].GetComponent<Node>().SetStandardBasisInventory();
     }
 
+    private int[] GetNodeInvRanks() {
+        int[] nodeInvRanks = new int[allNodes.Count];
+        Parallel.For(0, allNodes.Count, (i) => nodeInvRanks[i] = allNodes[i].GetComponent<Node>().rank);
+        return nodeInvRanks;
+    }
+    private int[] GetNodeInvLoads() {
+        int[] nodeInvLoads = new int[allNodes.Count];
+        Parallel.For(0, allNodes.Count, (i) => {
+            nodeInvLoads[i] = allNodes[i].GetComponent<Node>().inventory.FirstZeroRow();
+            if (nodeInvLoads[i] == -1) nodeInvLoads[i] = (int)dimension;
+        });
+        return nodeInvLoads;
+    }
     public IEnumerator UpdateCoverage() {
-        int timeStep = 0;
+        bool didFileInit = false;
         while (true) {
             print("Updating Coverage");
-            int[] coverageData = coverageCalculator.CalculateCoverage(dimension, nodeRange, 6, floor.transform.localScale.x, floor.transform.localScale.y,
+            int[] coverageData = coverageCalculator.CalculateAndDisplayCoverage(dimension, nodeRange, 6, floor.transform.localScale.x, floor.transform.localScale.y,
                 coverageTextureSize.x, coverageTextureSize.y, floor, this);
             
-            if (saveSimData) SimulationMetrics.WriteToFile(timeStep, coverageData, dimension, saveFilename);
+            if (saveSimData) {
+                if (!didFileInit) {
+                    SimulationMetricsIO.InitFileWrite(saveFilename);
+                    didFileInit = true;
+                }
+                SimulationMetricsIO.WriteToFile(coverageData, GetNodeInvRanks(), GetNodeInvLoads(), dimension);
+            }
             
             yield return new WaitForSeconds(nodeLoopTime);
         }

@@ -1,43 +1,52 @@
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
-public static class SimulationMetrics
+public static class SimulationMetricsIO
 {
     public enum Metrics {
         ShareOfFullyCovered,
-        RankAverageStandardized,
-        MinRankStandardized,
-        MaxRankStandardized,
+        ShareOfFullyCoveredMin1Intersect, // TODO
+        ShareOfFullyCoveredMin2Intersect, // TODO
         AverageInventoryLoad,
+        AverageInventoryLoadStandardized,
         MinInventoryLoad,
+        MinInventoryLoadStandardized,
         MaxInventoryLoad,
-
-        ALL
+        MaxInventoryLoadStandardized,
+        AverageNonRankIncreasingVectorsPerNode,
     }
+    public static int[] coverageData;
+    public static int[] nodeInvRanks;
+    public static int[] nodeInvLoads;
+    public static uint dimension;
 
-    public static void WriteToFile(int timeStep, int[] coverageData, uint dimension, string fileName) {
+    public static string filePath;
+
+    public static void InitFileWrite(string fileName) {
 
         string directoryPath = Path.Combine(Application.persistentDataPath, "Recordings");
         if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
-        string filePath = Path.Combine(directoryPath, fileName);
+        filePath = Path.Combine(directoryPath, fileName);
+        File.AppendAllText(filePath, "TODO: CSV header");
+    }
 
-        if (timeStep == 0) {
-            try {
-                File.Delete(filePath);
-                File.Create(filePath);
-            }
-            catch {
-                Debug.LogError("Error creating or deleting files at "+Application.persistentDataPath);
-                return;
-            }
-        }
-        string lineToWrite = "\n"+timeStep;
-        lineToWrite += ","+(""+ComputeMetric(Metrics.ShareOfFullyCovered, coverageData, dimension)).Replace(',','.');
+    public static void WriteToFile(int[] coverageData, int[] nodeInvRanks, int[] nodeInvLoads, uint dimension) {
+
+        // Write these to global vars so we don't have to provide them for every call of ComputeMetric
+        SimulationMetricsIO.coverageData = coverageData;
+        SimulationMetricsIO.nodeInvRanks = nodeInvRanks;
+        SimulationMetricsIO.nodeInvLoads = nodeInvLoads;
+        SimulationMetricsIO.dimension = dimension;
+
+        string lineToWrite = "\n"
+            + (""+ComputeMetric(Metrics.ShareOfFullyCovered)).Replace(',','.')
+            + (""+ComputeMetric(Metrics.ShareOfFullyCovered)).Replace(',','.');
         File.AppendAllText(filePath, lineToWrite);
         Debug.Log("File written at: " + filePath);
     }
 
-    public static float ComputeMetric(Metrics metricToCompute, int[] coverageData, uint dimension) {
+    public static float ComputeMetric(Metrics metricToCompute) {
         switch (metricToCompute) {
             case Metrics.ShareOfFullyCovered:
                 int fullyCoveredPoints = 0;
@@ -45,8 +54,32 @@ public static class SimulationMetrics
                     if (i == dimension) fullyCoveredPoints++;
                 }
                 return (float)fullyCoveredPoints / coverageData.Length;
+
+            case Metrics.AverageInventoryLoad:
+                return (float)nodeInvLoads.Average();
+
+            case Metrics.AverageInventoryLoadStandardized:
+                return (float)nodeInvLoads.Average() / dimension;
+
+            case Metrics.MinInventoryLoad:
+                return (float)nodeInvLoads.Min();
+
+            case Metrics.MinInventoryLoadStandardized:
+                return (float)nodeInvLoads.Min() / dimension;
+
+            case Metrics.MaxInventoryLoad:
+                return (float)nodeInvLoads.Max();
+
+            case Metrics.MaxInventoryLoadStandardized:
+                return (float)nodeInvLoads.Max() / dimension;
+            
+            case Metrics.AverageNonRankIncreasingVectorsPerNode:
+                return nodeInvLoads.Sum() - nodeInvRanks.Sum();
+
+            default:
+                return float.NaN;
+
         }
-        return 0f;
     }
 
 }

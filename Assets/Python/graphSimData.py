@@ -25,7 +25,7 @@ def main():
     plt.title('Proportion of area that is fully covered')
     plt.grid(True)
     plt.show()
-
+    
     return
 
 if __name__ == "__main__":

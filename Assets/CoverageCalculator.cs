@@ -8,11 +8,11 @@ public class CoverageCalculator : MonoBehaviour
     public RenderTexture rt;
     private Dictionary<List<GameObject>, int> rankLookup = new();
     private ComputeBuffer rankDataBuffer;
-    private int[] ranks;
+    private int[] rankCoverage;
 
-    public int[] CalculateCoverage(uint dimension, float nodeRange, int maxNeighborsToLookAt, float floorSizeX, float floorSizeZ, int pixelX, int pixelZ, GameObject floor, NodeManager nodeManager)
+    public int[] CalculateAndDisplayCoverage(uint dimension, float nodeRange, int maxNeighborsToLookAt, float floorSizeX, float floorSizeZ, int pixelX, int pixelZ, GameObject floor, NodeManager nodeManager)
     {
-        if (ranks == null || ranks.Length != pixelX*pixelZ) ranks = new int[pixelX*pixelZ];
+        if (rankCoverage == null || rankCoverage.Length != pixelX*pixelZ) rankCoverage = new int[pixelX*pixelZ];
         rankLookup.Clear();
         float stepX = floorSizeX / pixelX, stepZ = floorSizeZ / pixelZ;
         
@@ -36,18 +36,18 @@ public class CoverageCalculator : MonoBehaviour
                     }
                 }
                 // If the rank has already been calculated, grab it from the dictionary
-                if (rankLookup.ContainsKey(firstXNeighbors)) ranks[iX+iZ*pixelX] = rankLookup[firstXNeighbors];
+                if (rankLookup.ContainsKey(firstXNeighbors)) rankCoverage[iX+iZ*pixelX] = rankLookup[firstXNeighbors];
 
                 // Otherwise calculate the combined rank and save it
-                else if (firstXNeighbors.Count == 0) ranks[iX+iZ*pixelX] = 0;
-                else if (firstXNeighbors.Count == 1) ranks[iX+iZ*pixelX] = firstXNeighbors[0].GetComponent<Node>().rank;
+                else if (firstXNeighbors.Count == 0) rankCoverage[iX+iZ*pixelX] = 0;
+                else if (firstXNeighbors.Count == 1) rankCoverage[iX+iZ*pixelX] = firstXNeighbors[0].GetComponent<Node>().rank;
                 else {
                     MatrixGF2 combined = firstXNeighbors[0].GetComponent<Node>().reducedMatrix;
                     for (int i = 1; i < firstXNeighbors.Count; i++) {
                         combined = combined.StackOnto(firstXNeighbors[i].GetComponent<Node>().reducedMatrix);
                     }
                     int combinedRank = combined.Ref();
-                    ranks[iX+iZ*pixelX] = combinedRank;
+                    rankCoverage[iX+iZ*pixelX] = combinedRank;
                     rankLookup.Add(firstXNeighbors, combinedRank);
                 }
                 iX++;
@@ -67,12 +67,12 @@ public class CoverageCalculator : MonoBehaviour
         cs.SetInt("ResultHeight", pixelZ);
         cs.SetInt("MaxRank", (int) dimension);
 
-        if (rankDataBuffer == null || rankDataBuffer.count != ranks.Length)
-            rankDataBuffer = new ComputeBuffer(ranks.Length, sizeof(int));
-        rankDataBuffer.SetData(ranks);
+        if (rankDataBuffer == null || rankDataBuffer.count != rankCoverage.Length)
+            rankDataBuffer = new ComputeBuffer(rankCoverage.Length, sizeof(int));
+        rankDataBuffer.SetData(rankCoverage);
         cs.SetBuffer(kernel, "RankData", rankDataBuffer);
         cs.Dispatch(kernel, Mathf.CeilToInt(rt.width / 8f), Mathf.CeilToInt(rt.height / 8f), 1);
-        return ranks;
+        return rankCoverage;
     }
     
     void OnDestroy() {
