@@ -6,13 +6,24 @@ public class CoverageCalculator : MonoBehaviour
 {
     public ComputeShader cs;
     public RenderTexture rt;
+    public struct CoverageData {
+        public int[] ranks;
+        public int[] intersections;
+
+        public CoverageData(int[] rankCoverage, int[] intersections)
+        {
+            this.ranks = rankCoverage;
+            this.intersections = intersections;
+        }
+    }
     private Dictionary<List<GameObject>, int> rankLookup = new();
     private ComputeBuffer rankDataBuffer;
-    private int[] rankCoverage;
+    private int[] rankCoverage, intersections;
 
-    public int[] CalculateAndDisplayCoverage(uint dimension, float nodeRange, int maxNeighborsToLookAt, float floorSizeX, float floorSizeZ, int pixelX, int pixelZ, GameObject floor, NodeManager nodeManager)
+    public CoverageData CalculateAndDisplayCoverage(uint dimension, float nodeRange, int maxNeighborsToLookAt, float floorSizeX, float floorSizeZ, int pixelX, int pixelZ, GameObject floor, NodeManager nodeManager)
     {
         if (rankCoverage == null || rankCoverage.Length != pixelX*pixelZ) rankCoverage = new int[pixelX*pixelZ];
+        if (intersections == null || intersections.Length != pixelX*pixelZ) intersections = new int[pixelX*pixelZ];
         rankLookup.Clear();
         float stepX = floorSizeX / pixelX, stepZ = floorSizeZ / pixelZ;
         
@@ -50,6 +61,9 @@ public class CoverageCalculator : MonoBehaviour
                     rankCoverage[iX+iZ*pixelX] = combinedRank;
                     rankLookup.Add(firstXNeighbors, combinedRank);
                 }
+                // Save the amount of neighbors intersecting at the current position
+                intersections[iX+iZ*pixelX] = firstXNeighbors.Count;
+
                 iX++;
             }
             iZ++;
@@ -72,7 +86,7 @@ public class CoverageCalculator : MonoBehaviour
         rankDataBuffer.SetData(rankCoverage);
         cs.SetBuffer(kernel, "RankData", rankDataBuffer);
         cs.Dispatch(kernel, Mathf.CeilToInt(rt.width / 8f), Mathf.CeilToInt(rt.height / 8f), 1);
-        return rankCoverage;
+        return new CoverageData(rankCoverage, intersections);
     }
     
     void OnDestroy() {

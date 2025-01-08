@@ -211,15 +211,16 @@ public class NodeManager : MonoBehaviour
         bool didFileInit = false;
         while (true) {
             print("Updating Coverage");
-            int[] coverageData = coverageCalculator.CalculateAndDisplayCoverage(dimension, nodeRange, 6, floor.transform.localScale.x, floor.transform.localScale.y,
+            CoverageCalculator.CoverageData cd = coverageCalculator.CalculateAndDisplayCoverage(
+                dimension, nodeRange, 6, floor.transform.localScale.x, floor.transform.localScale.y,
                 coverageTextureSize.x, coverageTextureSize.y, floor, this);
-            
+                
             if (saveSimData) {
                 if (!didFileInit) {
                     SimulationMetricsIO.InitFileWrite(saveFilename);
                     didFileInit = true;
                 }
-                SimulationMetricsIO.WriteToFile(coverageData, GetNodeInvRanks(), GetNodeInvLoads(), dimension);
+                SimulationMetricsIO.WriteToFile(cd, GetNodeInvRanks(), GetNodeInvLoads(), dimension);
             }
             
             yield return new WaitForSeconds(nodeLoopTime);
