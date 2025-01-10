@@ -19,6 +19,12 @@ public class CommandLineParser : MonoBehaviour
         string[] parsed = command.Split(' ');
         int i = 0;
         while (i < parsed.Length) {
+            if (parsed[i][0] == 'p') {
+                switch (int.Parse(""+parsed[i][1])) {
+                    case 0: Parse("g 10 10 source 0 0 save test_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    default: break;
+                }
+            }
             if (parsed[i] == "g" || parsed[i] == "grid" || parsed[i] == "squaregrid") {
                 nodeManager.ChangeSetting(GRID_X, int.Parse(parsed[i+1]));
                 nodeManager.ChangeSetting(GRID_Y, int.Parse(parsed[i+2]));
@@ -63,6 +69,7 @@ public class CommandLineParser : MonoBehaviour
             else if (parsed[i] == "saveto" || parsed[i] == "save") {
                 nodeManager.saveFilename = parsed[i+1].Replace(".","").Replace("/","");
                 nodeManager.saveSimData = true;
+                nodeManager.didFileInit = false;
                 i+=2;
             }
             else if (parsed[i] == "stop" || parsed[i] == "end") {

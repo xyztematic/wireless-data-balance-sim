@@ -12,7 +12,7 @@ public class NodeManager : MonoBehaviour
     public Dictionary<ulong, List<GameObject>> chunkLookup = new();
     public Color highlightColor1 = Color.red, highlightColor2 = Color.magenta;
     public string saveFilename = "simdata_test";
-    public bool saveSimData = false;
+    public bool saveSimData = false, didFileInit = false;
 
     private readonly ulong yBitOffset = 0x00000001_00000000ul;
     private const float SQRT3OVER2 = 0.866025404f;
@@ -196,19 +196,21 @@ public class NodeManager : MonoBehaviour
 
     private int[] GetNodeInvRanks() {
         int[] nodeInvRanks = new int[allNodes.Count];
-        Parallel.For(0, allNodes.Count, (i) => nodeInvRanks[i] = allNodes[i].GetComponent<Node>().rank);
+        for (int i = 0; i < allNodes.Count; i++) {
+            nodeInvRanks[i] = allNodes[i].GetComponent<Node>().rank;
+        }
         return nodeInvRanks;
     }
     private int[] GetNodeInvLoads() {
         int[] nodeInvLoads = new int[allNodes.Count];
-        Parallel.For(0, allNodes.Count, (i) => {
+        for (int i = 0; i < allNodes.Count; i++) {
             nodeInvLoads[i] = allNodes[i].GetComponent<Node>().inventory.FirstZeroRow();
             if (nodeInvLoads[i] == -1) nodeInvLoads[i] = (int)dimension;
-        });
+        }
         return nodeInvLoads;
     }
     public IEnumerator UpdateCoverage() {
-        bool didFileInit = false;
+        didFileInit = false;
         while (true) {
             print("Updating Coverage");
             CoverageCalculator.CoverageData cd = coverageCalculator.CalculateAndDisplayCoverage(

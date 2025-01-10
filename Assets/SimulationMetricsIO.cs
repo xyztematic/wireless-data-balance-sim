@@ -35,7 +35,7 @@ public static class SimulationMetricsIO
         foreach (string metricName in Enum.GetNames(typeof(Metrics))) {
             csvHeader += ","+metricName;
         }
-        csvHeader.Remove(0);
+        csvHeader = csvHeader.Remove(0, 1);
         File.AppendAllText(filePath, csvHeader);
     }
 
@@ -49,9 +49,9 @@ public static class SimulationMetricsIO
 
         string lineToWrite = "\n";
         foreach (Metrics metric in Enum.GetValues(typeof(Metrics))) {
-            lineToWrite += (""+ComputeMetric(metric)).Replace(",",".");
+            lineToWrite += (""+ComputeMetric(metric)).Replace(",",".")+",";
         }
-        File.AppendAllText(filePath, lineToWrite);
+        File.AppendAllText(filePath, lineToWrite.TrimEnd(','));
         Debug.Log("File written at: " + filePath);
     }
 
@@ -111,7 +111,7 @@ public static class SimulationMetricsIO
                 return (float)nodeInvLoads.Max() / dimension;
             
             case Metrics.AverageNonRankIncreasingVectorsPerNode:
-                return nodeInvLoads.Sum() - nodeInvRanks.Sum();
+                return (nodeInvLoads.Sum() - nodeInvRanks.Sum()) / nodeInvLoads.Length;
 
             default:
                 return float.NaN;
