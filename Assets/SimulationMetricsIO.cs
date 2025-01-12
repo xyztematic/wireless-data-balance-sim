@@ -12,16 +12,17 @@ public static class SimulationMetricsIO
         ShareOfFullyCoveredMin3Intersect,
         ShareOfFullyCoveredMin4Intersect,
         AverageInventoryLoad,
-        AverageInventoryLoadStandardized,
+        AverageInventoryLoadNormalized,
         MinInventoryLoad,
-        MinInventoryLoadStandardized,
-        MaxInventoryLoad,
-        MaxInventoryLoadStandardized,
+        MinInventoryLoadNormalized,
+        MaxInventoryLoadExcludingSourceNodes,
+        MaxInventoryLoadExcludingSourceNodesNormalized,
         AverageNonRankIncreasingVectorsPerNode,
     }
     public static CoverageCalculator.CoverageData coverageData;
     public static int[] nodeInvRanks;
     public static int[] nodeInvLoads;
+    public static bool[] nodeSourceMap;
     public static uint dimension;
 
     public static string filePath;
@@ -39,12 +40,13 @@ public static class SimulationMetricsIO
         File.AppendAllText(filePath, csvHeader);
     }
 
-    public static void WriteToFile(CoverageCalculator.CoverageData coverageData, int[] nodeInvRanks, int[] nodeInvLoads, uint dimension) {
+    public static void WriteToFile(CoverageCalculator.CoverageData coverageData, int[] nodeInvRanks, int[] nodeInvLoads, bool[] nodeSourceMap, uint dimension) {
 
         // Write these to global vars so we don't have to provide them for every call of ComputeMetric
         SimulationMetricsIO.coverageData = coverageData;
         SimulationMetricsIO.nodeInvRanks = nodeInvRanks;
         SimulationMetricsIO.nodeInvLoads = nodeInvLoads;
+        SimulationMetricsIO.nodeSourceMap = nodeSourceMap;
         SimulationMetricsIO.dimension = dimension;
 
         string lineToWrite = "\n";
@@ -95,23 +97,28 @@ public static class SimulationMetricsIO
             case Metrics.AverageInventoryLoad:
                 return (float)nodeInvLoads.Average();
 
-            case Metrics.AverageInventoryLoadStandardized:
+            case Metrics.AverageInventoryLoadNormalized:
                 return (float)nodeInvLoads.Average() / dimension;
 
             case Metrics.MinInventoryLoad:
                 return (float)nodeInvLoads.Min();
 
-            case Metrics.MinInventoryLoadStandardized:
+            case Metrics.MinInventoryLoadNormalized:
                 return (float)nodeInvLoads.Min() / dimension;
 
-            case Metrics.MaxInventoryLoad:
-                return (float)nodeInvLoads.Max();
+            case Metrics.MaxInventoryLoadExcludingSourceNodes:
+                int max = 0;
+                for (int i = 0; i < nodeSourceMap.Length; i++) {
+                    if (nodeSourceMap[i]) continue;
+                    max = (nodeInvLoads[i] > max) ? nodeInvLoads[i] : max;
+                }
+                return max;
 
-            case Metrics.MaxInventoryLoadStandardized:
-                return (float)nodeInvLoads.Max() / dimension;
+            case Metrics.MaxInventoryLoadExcludingSourceNodesNormalized:
+                return ComputeMetric(Metrics.MaxInventoryLoadExcludingSourceNodes) / dimension;
             
             case Metrics.AverageNonRankIncreasingVectorsPerNode:
-                return (nodeInvLoads.Sum() - nodeInvRanks.Sum()) / nodeInvLoads.Length;
+                return ((float)(nodeInvLoads.Sum() - nodeInvRanks.Sum())) / nodeInvLoads.Length;
 
             default:
                 return float.NaN;

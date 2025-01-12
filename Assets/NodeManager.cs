@@ -21,6 +21,7 @@ public class NodeManager : MonoBehaviour
     private List<GameObject> highlightedNodes = new();
     private CoverageCalculator coverageCalculator;
     private Coroutine coverageUpdater;
+    private bool[] nodeSourceMap;
 
     public enum NodeSetting {
         GRID_X,
@@ -44,6 +45,7 @@ public class NodeManager : MonoBehaviour
     public void RebuildNodes() {
         UnhighlightAll();
         chunkLookup.Clear();
+        nodeSourceMap = new bool[gridX*gridZ];
         Transform parentTransform = nodeParent.transform;
         int diff = (int) (gridX*gridZ) - allNodes.Count;
 
@@ -188,10 +190,12 @@ public class NodeManager : MonoBehaviour
     public void SetSourceNodeRandomBasis(int x, int y) {
         int index = y * (int)gridX + x;
         allNodes[index].GetComponent<Node>().SetRandomBasisInventory();
+        nodeSourceMap[index] = true;
     }
     public void SetSourceNodeStandardBasis(int x, int y) {
         int index = y * (int)gridX + x;
         allNodes[index].GetComponent<Node>().SetStandardBasisInventory();
+        nodeSourceMap[index] = true;
     }
 
     private int[] GetNodeInvRanks() {
@@ -209,6 +213,9 @@ public class NodeManager : MonoBehaviour
         }
         return nodeInvLoads;
     }
+    private bool[] GetNodeSourceMap() {
+        return nodeSourceMap;
+    }
     public IEnumerator UpdateCoverage() {
         didFileInit = false;
         while (true) {
@@ -222,7 +229,7 @@ public class NodeManager : MonoBehaviour
                     SimulationMetricsIO.InitFileWrite(saveFilename);
                     didFileInit = true;
                 }
-                SimulationMetricsIO.WriteToFile(cd, GetNodeInvRanks(), GetNodeInvLoads(), dimension);
+                SimulationMetricsIO.WriteToFile(cd, GetNodeInvRanks(), GetNodeInvLoads(), GetNodeSourceMap(), dimension);
             }
             
             yield return new WaitForSeconds(nodeLoopTime);
