@@ -20,18 +20,18 @@ public class CoverageCalculator : MonoBehaviour
     private ComputeBuffer rankDataBuffer;
     private int[] rankCoverage, intersections;
 
-    public CoverageData CalculateAndDisplayCoverage(uint dimension, float nodeRange, int maxNeighborsToLookAt, float floorSizeX, float floorSizeZ, int pixelX, int pixelZ, GameObject floor, NodeManager nodeManager)
+    public CoverageData CalculateAndDisplayCoverage(uint dimension, float nodeRange, int maxNeighborsToLookAt, int pixelX, int pixelZ, GameObject floor, NodeManager nodeManager)
     {
         if (rankCoverage == null || rankCoverage.Length != pixelX*pixelZ) rankCoverage = new int[pixelX*pixelZ];
         if (intersections == null || intersections.Length != pixelX*pixelZ) intersections = new int[pixelX*pixelZ];
         rankLookup.Clear();
-        float stepX = floorSizeX / pixelX, stepZ = floorSizeZ / pixelZ;
+        float stepX = floor.transform.localScale.x / pixelX, stepZ = floor.transform.localScale.y / pixelZ;
         
         // TODO: Outer loop as parallel?
         int iZ = 0;
-        for (float currZ = 0f; iZ < pixelZ; currZ+=stepZ) {
+        for (float currZ = floor.transform.position.z - floor.transform.localScale.y/2f; iZ < pixelZ; currZ+=stepZ) {
             int iX = 0;
-            for (float currX = 0f; iX < pixelX; currX+=stepX) {
+            for (float currX = floor.transform.position.x - floor.transform.localScale.x/2f; iX < pixelX; currX+=stepX) {
                 Vector2 currWorldPos = new Vector3(currX, currZ);
                 ulong currentChunk = nodeManager.ChunkID(currX, currZ);
                 List<GameObject> neighborCandidates = nodeManager.GetNeighborCandidates(currentChunk);

@@ -19,13 +19,22 @@ public class CommandLineParser : MonoBehaviour
         string[] parsed = command.Split(' ');
         int i = 0;
         while (i < parsed.Length) {
+            if (parsed[i] == "a" || parsed[i] == "alg" || parsed[i] == "algorithm") {
+                nodeManager.ChangeSetting(DISTR_ALG, int.Parse(""+parsed[i+1]));
+                i+=2;
+            }
+            // Command presets (typing stuff is hard :/)
             if (parsed[i][0] == 'p') {
                 switch (int.Parse(""+parsed[i][1])) {
                     case 0: Parse("g 10 10 source 0 0 save test_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 1: Parse("g 10 10 source 0 0 source 9 9 save test_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 2: Parse("g 1 5 source 0 0 save test_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    
                     default: break;
                 }
+                break;
             }
-            if (parsed[i] == "g" || parsed[i] == "grid" || parsed[i] == "squaregrid") {
+            else if (parsed[i] == "g" || parsed[i] == "grid" || parsed[i] == "squaregrid") {
                 nodeManager.ChangeSetting(GRID_X, int.Parse(parsed[i+1]));
                 nodeManager.ChangeSetting(GRID_Y, int.Parse(parsed[i+2]));
                 nodeManager.ChangeLayout(GRID_SQUARE);

@@ -21,7 +21,9 @@ def main():
     for column_name, values in columns.items():
         plt.figure()
         plt.plot(range(len(values)), values, marker='o')
-        plt.xlabel('Row number (index)')
+        plt.xlabel('Timestep')
+        plt.xlim(0, plt.xlim()[1])
+        plt.ylim(max(0, plt.ylim()[0]), plt.ylim()[1])
         plt.ylabel(column_name)
         plt.title(f'Plot of {column_name}')
         plt.grid(True)

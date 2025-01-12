@@ -13,6 +13,14 @@ public class NodeManager : MonoBehaviour
     public Color highlightColor1 = Color.red, highlightColor2 = Color.magenta;
     public string saveFilename = "simdata_test";
     public bool saveSimData = false, didFileInit = false;
+    public enum DistributionAlgorithm {
+        MAX_DIM,
+        MAX_DIM_DIV_NEIGHBORS,
+        MAX_DIM_DIV_NEIGHBORS_ADD_RED,
+        MAX_DIM_DIV_MIN_NEIGHBORHOOD,
+        MAX_DIM_DIV_MIN_NEIGHBORHOOD_ADD_RED,
+    }
+    private DistributionAlgorithm distrAlg = DistributionAlgorithm.MAX_DIM;
 
     private readonly ulong yBitOffset = 0x00000001_00000000ul;
     private const float SQRT3OVER2 = 0.866025404f;
@@ -25,7 +33,8 @@ public class NodeManager : MonoBehaviour
 
     public enum NodeSetting {
         GRID_X,
-        GRID_Y
+        GRID_Y,
+        DISTR_ALG
     }
     public enum LayoutMode {
         GRID_SQUARE,
@@ -35,8 +44,8 @@ public class NodeManager : MonoBehaviour
 
     public ulong ChunkID(Vector3 worldPos) {
         ulong chunkID = 0;
-        chunkID += (ulong) Mathf.FloorToInt(worldPos.x / nodeRange);
-        chunkID += ((ulong) Mathf.FloorToInt(worldPos.z / nodeRange)) * yBitOffset;
+        chunkID += (ulong) Mathf.Max(Mathf.FloorToInt(worldPos.x / nodeRange), 0);
+        chunkID += ((ulong) Mathf.Max(Mathf.FloorToInt(worldPos.z / nodeRange), 0)) * yBitOffset;
         return chunkID;
     }
     public ulong ChunkID(float xWorldPos, float zWorldPos) {
@@ -102,13 +111,14 @@ public class NodeManager : MonoBehaviour
             tempChunkIDs.Add(chunkID);
         }
         for (int i = 0; i < allNodes.Count; i++) {
-            allNodes[i].GetComponent<Node>().Activate(dimension, nodeLoopTime, nodeRange, tempChunkIDs[i], this, i == allNodes.Count/2);
+            allNodes[i].GetComponent<Node>().Activate(dimension, nodeLoopTime, nodeRange, tempChunkIDs[i], distrAlg, this);
         }
-        // Update the floor object to fit the size of the new network
-        // NOTE: localScale y and z is swapped, because the plane is rotated
-        // TODO: wrong sizing
+        // Update the floor object to fit the size of the new network, including the range of the nodes
+        nodeBoundsX[0] -= nodeRange;
+        nodeBoundsZ[0] -= nodeRange;
+        nodeBoundsX[1] += nodeRange;
+        nodeBoundsZ[1] += nodeRange;
         floor.transform.localScale = new Vector3(nodeBoundsX[1] - nodeBoundsX[0], nodeBoundsZ[1] - nodeBoundsZ[0], 1f);
-        floor.transform.localScale *= 1.01f;
         floor.transform.position = new Vector3(floor.transform.localScale.x / 2f + nodeBoundsX[0], 0f, floor.transform.localScale.y / 2f + nodeBoundsX[0]);
         // Kick off the Thread to update coverage visibility
         if (coverageUpdater != null) StopCoroutine(coverageUpdater);
@@ -123,7 +133,10 @@ public class NodeManager : MonoBehaviour
             case NodeSetting.GRID_Y:
                 gridZ = (uint)newValue;
                 break;
-            
+            case NodeSetting.DISTR_ALG:
+                distrAlg = (DistributionAlgorithm) newValue;
+                break;
+
             default:
                 Debug.LogError("Tried to change unknown setting");
                 break;
@@ -221,8 +234,7 @@ public class NodeManager : MonoBehaviour
         while (true) {
             print("Updating Coverage");
             CoverageCalculator.CoverageData cd = coverageCalculator.CalculateAndDisplayCoverage(
-                dimension, nodeRange, 6, floor.transform.localScale.x, floor.transform.localScale.y,
-                coverageTextureSize.x, coverageTextureSize.y, floor, this);
+                dimension, nodeRange, 6, coverageTextureSize.x, coverageTextureSize.y, floor, this);
                 
             if (saveSimData) {
                 if (!didFileInit) {
