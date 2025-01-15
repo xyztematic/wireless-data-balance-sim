@@ -21,6 +21,8 @@ public class NodeManager : MonoBehaviour
         MAX_DIM_DIV_MIN_NEIGHBORHOOD_ADD_RED,
     }
     private DistributionAlgorithm distrAlg = DistributionAlgorithm.MAX_DIM;
+    private bool dynamicInventory = true;
+    private int redundancyBonus = 0;
 
     private readonly ulong yBitOffset = 0x00000001_00000000ul;
     private const float SQRT3OVER2 = 0.866025404f;
@@ -34,7 +36,10 @@ public class NodeManager : MonoBehaviour
     public enum NodeSetting {
         GRID_X,
         GRID_Y,
-        DISTR_ALG
+        DISTR_ALG,
+        DYNAMIC_INVENTORY,
+        REDUNDANCY_BONUS,
+        DIMENSION
     }
     public enum LayoutMode {
         GRID_SQUARE,
@@ -111,7 +116,7 @@ public class NodeManager : MonoBehaviour
             tempChunkIDs.Add(chunkID);
         }
         for (int i = 0; i < allNodes.Count; i++) {
-            allNodes[i].GetComponent<Node>().Activate(dimension, nodeLoopTime, nodeRange, tempChunkIDs[i], distrAlg, this);
+            allNodes[i].GetComponent<Node>().Activate(this, dimension, nodeLoopTime, nodeRange, tempChunkIDs[i], distrAlg, dynamicInventory, redundancyBonus);
         }
         // Update the floor object to fit the size of the new network, including the range of the nodes
         nodeBoundsX[0] -= nodeRange;
@@ -123,6 +128,7 @@ public class NodeManager : MonoBehaviour
         // Kick off the Thread to update coverage visibility
         if (coverageUpdater != null) StopCoroutine(coverageUpdater);
         if (allNodes.Count > 0) coverageUpdater = StartCoroutine(UpdateCoverage());
+        Time.timeScale = 1f;
     }
     
     public void ChangeSetting(NodeSetting setting, int newValue) {
@@ -136,7 +142,15 @@ public class NodeManager : MonoBehaviour
             case NodeSetting.DISTR_ALG:
                 distrAlg = (DistributionAlgorithm) newValue;
                 break;
-
+            case NodeSetting.DYNAMIC_INVENTORY:
+                dynamicInventory = newValue == 0;
+                break;
+            case NodeSetting.REDUNDANCY_BONUS:
+                redundancyBonus = newValue;
+                break;
+            case NodeSetting.DIMENSION:
+                dimension = (uint)newValue;
+                break;
             default:
                 Debug.LogError("Tried to change unknown setting");
                 break;

@@ -14,5 +14,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         return;
     }
     float coverage = (float) RankData[index] / MaxRank;
+    // Replace blue channel with 0.01 * (RankData[index] % 4) for a better grasp of data flow for high n
     Result[id.xy] = float4(1.0 -coverage, coverage, 0.0, 0.0);
+
 }

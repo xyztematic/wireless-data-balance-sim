@@ -19,20 +19,35 @@ public class CommandLineParser : MonoBehaviour
         string[] parsed = command.Split(' ');
         int i = 0;
         while (i < parsed.Length) {
-            if (parsed[i] == "a" || parsed[i] == "alg" || parsed[i] == "algorithm") {
-                nodeManager.ChangeSetting(DISTR_ALG, int.Parse(""+parsed[i+1]));
-                i+=2;
-            }
+            
             // Command presets (typing stuff is hard :/)
-            if (parsed[i][0] == 'p') {
-                switch (int.Parse(""+parsed[i][1])) {
-                    case 0: Parse("g 10 10 source 0 0 save test_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 1: Parse("g 10 10 source 0 0 source 9 9 save test_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 2: Parse("g 1 5 source 0 0 save test_"+System.DateTime.Now.ToFileTimeUtc()); break;
+            if (parsed[i] == "p" || parsed[i] == "preset") {
+                switch (int.Parse(""+parsed[i+1])) {
+                    case 0: Parse("a 0 n 100 g 10 10 source 0 0 save test_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 1: Parse("a 0 n 100 g 10 10 source 0 0 source 9 9 save test_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 2: Parse("a 1 0 n 20 g 1 5 source 0 0 save test_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     
                     default: break;
                 }
                 break;
+            }
+            else if (parsed[i] == "a" || parsed[i] == "alg" || parsed[i] == "algorithm") {
+                nodeManager.ChangeSetting(DISTR_ALG, int.Parse(""+parsed[i+1]));
+                i+=2;
+                if (int.TryParse(parsed[i], out int next)) {
+                    nodeManager.ChangeSetting(DYNAMIC_INVENTORY, next);
+                    i++;
+                    if (int.TryParse(parsed[i], out next)) {
+                        nodeManager.ChangeSetting(REDUNDANCY_BONUS, next);
+                        i++;
+                    }
+                    else nodeManager.ChangeSetting(REDUNDANCY_BONUS, 0);
+                }
+                else nodeManager.ChangeSetting(DYNAMIC_INVENTORY, 1);
+            }
+            else if (parsed[i] == "n" || parsed[i] == "dim" || parsed[i] == "dimension") {
+                nodeManager.ChangeSetting(DIMENSION, int.Parse(parsed[i+1]));
+                i+=2;
             }
             else if (parsed[i] == "g" || parsed[i] == "grid" || parsed[i] == "squaregrid") {
                 nodeManager.ChangeSetting(GRID_X, int.Parse(parsed[i+1]));
@@ -83,10 +98,7 @@ public class CommandLineParser : MonoBehaviour
             }
             else if (parsed[i] == "stop" || parsed[i] == "end") {
                 nodeManager.saveSimData = false;
-                nodeManager.ChangeSetting(GRID_X, 0);
-                nodeManager.ChangeSetting(GRID_Y, 0);
-                nodeManager.ChangeLayout(GRID_SQUARE);
-                nodeManager.RebuildNodes();
+                Time.timeScale = 0f;
                 ProcessStartInfo start = new ProcessStartInfo("/usr/bin/python3", Application.dataPath+"/Python/graphSimData.py "+Application.persistentDataPath+"/Recordings/"+nodeManager.saveFilename);
                 start.UseShellExecute = false;
                 Process process = Process.Start(start);

@@ -20,15 +20,17 @@ public class Node : MonoBehaviour
     // Stores incoming data sent from neighboring nodes in a thread-safe queue for later processing
     public ConcurrentQueue<int[]> recieveBuffer;
     private MeshRenderer meshRenderer;
-    private int dimension, logDimension;
+    private int dimension, logDimension, redundancyBonus;
     private int[] toBroadcast;
     private float loopTime, nodeRange;
-    private bool isSource = false;
+    private bool isSource = false, dynamicInventory;
     private NodeManager.DistributionAlgorithm distrAlg;
 
     public bool active = false;
 
-    public void Activate(uint dimension, float loopTime, float nodeRange, ulong chunkID, NodeManager.DistributionAlgorithm distrAlg, NodeManager nodeManager) {
+    public void Activate(NodeManager nodeManager, uint dimension, float loopTime, float nodeRange, ulong chunkID,
+        NodeManager.DistributionAlgorithm distrAlg, bool dynamicInventory, int redundancyBonus) {
+        this.nodeManager = nodeManager;
         this.dimension = (int) dimension;
         this.logDimension = Mathf.FloorToInt(Mathf.Log(this.dimension, 2f)+1);
         this.firstZeroRow = 0;
@@ -37,7 +39,8 @@ public class Node : MonoBehaviour
         this.loopTime = loopTime;
         this.nodeRange = nodeRange;
         this.distrAlg = distrAlg;
-        this.nodeManager = nodeManager;
+        this.dynamicInventory = dynamicInventory;
+        this.redundancyBonus = redundancyBonus;
         this.meshRenderer = gameObject.GetComponent<MeshRenderer>();
         // Get neighbor candidates from NodeManager and remove all candidates out of range
         neighbors = nodeManager.GetNeighborCandidates(chunkID);
@@ -57,12 +60,13 @@ public class Node : MonoBehaviour
     private IEnumerator NodeLoop() {
         yield return new WaitForSeconds(Random.Range(0f, loopTime));
         while (true) {
-            int compare = 0;
+            int compare = redundancyBonus;
             switch (distrAlg) {
-                case MAX_DIM: compare = dimension; break;
-                case MAX_DIM_DIV_NEIGHBORS: compare = dimension / neighborCount; break;
-                default: compare = dimension; break;
+                case MAX_DIM: compare += dimension; break;
+                case MAX_DIM_DIV_NEIGHBORS: compare += dimension / neighborCount; break;
+                default: compare += dimension; break;
             }
+            if (compare > dimension) compare = dimension;
             if (rank <= compare) {
                 for (int i = 0; i < neighborCount; i++) {
                     StepRecieveBuffer();
@@ -70,12 +74,11 @@ public class Node : MonoBehaviour
                 }
             }
             else if (rank < dimension) {
-                StepRecieveBuffer(overwriteMode: true);
+                StepRecieveBuffer(overwriteMode: dynamicInventory);
                 HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
             }
             
             if (rank > 0 && rank <= compare || isSource) BroadcastLRLC();
-            //else BroadcastLRLC(fastForwardMode: true);
             
             yield return new WaitForSeconds(loopTime);
         }
@@ -169,7 +172,7 @@ public class Node : MonoBehaviour
     }
     // Sends a random linear combination of at most log2(dimension)+1 rows from the inventory to all neighbors
     // TODO: Could be faster. Optimize Parallel.For (i.e. by accumulating and %2 or djb)
-    private void BroadcastLRLC(bool fastForwardMode = false) {
+    private void BroadcastLRLC() {
         if (this.firstZeroRow < this.logDimension) {
             Parallel.For(0, this.dimension, (x) => {
                 int write = 0;
@@ -188,8 +191,6 @@ public class Node : MonoBehaviour
                 pickedRowIndices.Add(toPickFromIndices[randomChoice]);
                 toPickFromIndices.RemoveAt(randomChoice);
             }
-            // Include information in overridable fast forward row
-            if (fastForwardMode && !pickedRowIndices.Contains(0)) pickedRowIndices.Add(0);
 
             Parallel.For(0, this.dimension, (x) => {
                 int write = 0;
