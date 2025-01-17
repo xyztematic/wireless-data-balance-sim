@@ -143,7 +143,7 @@ public class NodeManager : MonoBehaviour
                 distrAlg = (DistributionAlgorithm) newValue;
                 break;
             case NodeSetting.DYNAMIC_INVENTORY:
-                dynamicInventory = newValue == 0;
+                dynamicInventory = newValue != 0;
                 break;
             case NodeSetting.REDUNDANCY_BONUS:
                 redundancyBonus = newValue;

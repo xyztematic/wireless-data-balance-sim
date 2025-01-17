@@ -23,9 +23,12 @@ public class CommandLineParser : MonoBehaviour
             // Command presets (typing stuff is hard :/)
             if (parsed[i] == "p" || parsed[i] == "preset") {
                 switch (int.Parse(""+parsed[i+1])) {
-                    case 0: Parse("a 0 n 100 g 10 10 source 0 0 save test_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 1: Parse("a 0 n 100 g 10 10 source 0 0 source 9 9 save test_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 2: Parse("a 1 0 n 20 g 1 5 source 0 0 save test_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 0: Parse("a 0 n 100 g 10 10 s 0 0 save sim_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 1: Parse("a 0 n 100 g 10 10 s 0 0 s 9 9 save sim_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 2: Parse("a 1 0 n 20 g 1 5 s 0 0 save sim_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 3: Parse("a 1 1 n 20 g 1 5 s 0 0 save sim_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 4: Parse("a 1 0 n 20 h 5 5 s 0 0 save sim_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 5: Parse("a 1 1 n 20 h 5 5 s 0 0 save sim_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     
                     default: break;
                 }
@@ -70,11 +73,11 @@ public class CommandLineParser : MonoBehaviour
                 nodeManager.RebuildNodes();
                 i+=3;
             }
-            else if (parsed[i] == "source" || parsed[i] == "sourcenode") {
+            else if (parsed[i] == "s" || parsed[i] == "source") {
                 nodeManager.SetSourceNodeRandomBasis(int.Parse(parsed[i+1]), int.Parse(parsed[i+2]));
                 i+=3;
             }
-            else if (parsed[i] == "sourcestd") {
+            else if (parsed[i] == "std" || parsed[i] == "sourcestd") {
                 nodeManager.SetSourceNodeStandardBasis(int.Parse(parsed[i+1]), int.Parse(parsed[i+2]));
                 i+=3;
             }

@@ -23,7 +23,7 @@ public class Node : MonoBehaviour
     private int dimension, logDimension, redundancyBonus;
     private int[] toBroadcast;
     private float loopTime, nodeRange;
-    private bool isSource = false, dynamicInventory;
+    private bool dynamicInventory;
     private NodeManager.DistributionAlgorithm distrAlg;
 
     public bool active = false;
@@ -59,43 +59,27 @@ public class Node : MonoBehaviour
     
     private IEnumerator NodeLoop() {
         yield return new WaitForSeconds(Random.Range(0f, loopTime));
+        print(distrAlg.ToString());
         while (true) {
-            int compare = redundancyBonus;
-            switch (distrAlg) {
-                case MAX_DIM: compare += dimension; break;
-                case MAX_DIM_DIV_NEIGHBORS: compare += dimension / neighborCount; break;
-                default: compare += dimension; break;
-            }
-            if (compare > dimension) compare = dimension;
-            if (rank <= compare) {
-                for (int i = 0; i < neighborCount; i++) {
+            bool notFull = false;
+            for (int i = 0; i < neighborCount; i++) {
+                switch (distrAlg) {
+                    case MAX_DIM: notFull = rank < dimension; break;
+                    case MAX_DIM_DIV_NEIGHBORS: notFull = rank <= dimension / neighborCount + 1; break;
+                    default: break;
+                }
+            
+                if (notFull) {
                     StepRecieveBuffer();
-                    HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
+                }
+                else if (rank < dimension) {
+                    if (dynamicInventory) StepRecieveBuffer(overwriteMode: true);
                 }
             }
-            else if (rank < dimension) {
-                StepRecieveBuffer(overwriteMode: dynamicInventory);
-                HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
-            }
+            HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
             
-            if (rank > 0 && rank <= compare || isSource) BroadcastLRLC();
-            
-            yield return new WaitForSeconds(loopTime);
-        }
-    }
-    private IEnumerator NodeLoopTimed() {
-
-        while (true) {
-            float t1 = Time.realtimeSinceStartup;
             if (rank > 0) BroadcastLRLC();
-            float t2 = Time.realtimeSinceStartup;
-
-            for (int i = 0; i < neighborCount; i++) {
-                StepRecieveBuffer();
-                HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
-            }
-            float t3 = Time.realtimeSinceStartup;
-            //print(Mathf.Round((t2 - t1)*1000000) + " " + Mathf.Round((t3 - t2)*1000000));
+            
             yield return new WaitForSeconds(loopTime);
         }
     }
@@ -130,7 +114,6 @@ public class Node : MonoBehaviour
         this.reducedMatrix = copy;
         this.firstZeroRow = dimension;
         this.rank = rank;
-        this.isSource = true;
         HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
         print("Finished setting random basis inventory!");
     }
@@ -140,38 +123,40 @@ public class Node : MonoBehaviour
         this.reducedMatrix = MatrixGF2.Identity(this.dimension);
         this.firstZeroRow = this.dimension;
         this.rank = this.dimension;
-        this.isSource = true;
         HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
         print("Finished setting standard basis inventory!");
     }
 
     // Dequeues the front item of the recieve-buffer and integrates it into the nodes inventory
     private void StepRecieveBuffer(bool overwriteMode = false) {
-        int[] topItem;
-        int rowToOverwrite = Random.Range(0, inventory.FirstZeroRow());
+        int[] topItem; int newRank;
+        
+        // Try fetching from the receive buffer. Return on wrong format.
         if (!this.recieveBuffer.TryDequeue(out topItem) || topItem.Length != this.dimension) return;
-        if (overwriteMode)
-            this.reducedMatrix.WriteRow(rowToOverwrite, topItem);
-        else
+
+        // Standard mode (Node is not deemed full by the algorithm). Insert into first empty row.
+        if (!overwriteMode) {
             this.reducedMatrix.WriteRow(reducedMatrix.FirstZeroRow(), topItem);
-        // If the recieved information is a linear combination of some entries of the inventory, don't save it
-        // TODO: SLOW! Could be more optimal with gauss_from_row or even manual computation
-        int newRank = reducedMatrix.Ref();
-        if (this.rank == newRank && !overwriteMode) {
-            //print(reducedMatrix.ToString());
-            //print(firstZeroRow);
-            return;
-        }
-        if (overwriteMode)
-            this.inventory.WriteRow(rowToOverwrite, topItem);
-        else
+        
+            // If insert would increase rank, insert, otherwise return
+            newRank = reducedMatrix.Ref();
+            if (this.rank == newRank) return;
             this.inventory.WriteRow(firstZeroRow, topItem);
+        }
+        // Overwrite mode (Node is deemed full), overwrites a random row. This prevents blocking of information relay.
+        else {
+            int rowToOverwrite = Random.Range(0, inventory.FirstZeroRow());
+            this.inventory.WriteRow(rowToOverwrite, topItem);
+            // We need to recompute the reduced matrix from scratch after an overwrite
+            this.reducedMatrix = this.inventory.Copy();
+            newRank = reducedMatrix.Ref();
+        }
+
         this.firstZeroRow = this.inventory.FirstZeroRow();
         this.rank = newRank;
-        //print(this.rank);
     }
     // Sends a random linear combination of at most log2(dimension)+1 rows from the inventory to all neighbors
-    // TODO: Could be faster. Optimize Parallel.For (i.e. by accumulating and %2 or djb)
+    // Uses fast-forwarding: If not already chosen, adds the last received row into the random linear combination
     private void BroadcastLRLC() {
         if (this.firstZeroRow < this.logDimension) {
             Parallel.For(0, this.dimension, (x) => {
@@ -186,11 +171,14 @@ public class Node : MonoBehaviour
         else {
             List<int> toPickFromIndices = new(Enumerable.Range(0, this.firstZeroRow));
             List<int> pickedRowIndices = new();
+            bool isLastRowIncluded = false;
             for (int choices = this.firstZeroRow; choices > this.firstZeroRow - this.logDimension; choices--) {
                 int randomChoice = Random.Range(0, choices);
                 pickedRowIndices.Add(toPickFromIndices[randomChoice]);
+                if (toPickFromIndices[randomChoice] == this.firstZeroRow - 1) isLastRowIncluded = true;
                 toPickFromIndices.RemoveAt(randomChoice);
             }
+            if (!isLastRowIncluded) pickedRowIndices.Add(this.firstZeroRow - 1);
 
             Parallel.For(0, this.dimension, (x) => {
                 int write = 0;
