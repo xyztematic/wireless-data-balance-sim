@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using static NodeManager.NodeSetting;
 using static NodeManager.LayoutMode;
 using System.Diagnostics;
+using System.Globalization;
 
 public class CommandLineParser : MonoBehaviour
 {
@@ -23,12 +24,14 @@ public class CommandLineParser : MonoBehaviour
             // Command presets (typing stuff is hard :/)
             if (parsed[i] == "p" || parsed[i] == "preset") {
                 switch (int.Parse(""+parsed[i+1])) {
-                    case 0: Parse("a 0 n 100 g 10 10 s 0 0 save sim_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 1: Parse("a 0 n 100 g 10 10 s 0 0 s 9 9 save sim_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 2: Parse("a 1 0 n 20 g 1 5 s 0 0 save sim_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 3: Parse("a 1 1 n 20 g 1 5 s 0 0 save sim_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 4: Parse("a 1 0 n 20 h 5 5 s 0 0 save sim_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 5: Parse("a 1 1 n 20 h 5 5 s 0 0 save sim_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 0: Parse("a 0 n 100 g 10 10 s 0 0 save p0_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 1: Parse("a 0 n 100 g 10 10 s 0 0 s 9 9 save p1_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 2: Parse("a 1 0 n 20 g 1 5 s 0 0 save p2_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 3: Parse("a 1 1 n 20 g 1 5 s 0 0 save p3_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 4: Parse("a 1 0 n 100 h 5 5 s 0 0 save p4_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 5: Parse("a 1 1 n 100 h 5 5 s 0 0 save p5_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 6: Parse("a 1 r 1 n 100 h 10 10 s 0 0 save p6_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 7: Parse("a 1 r 1.5 n 100 h 10 10 s 0 0 save p7_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     
                     default: break;
                 }
@@ -48,6 +51,14 @@ public class CommandLineParser : MonoBehaviour
                 }
                 else nodeManager.ChangeSetting(DYNAMIC_INVENTORY, 1);
             }
+            else if (parsed[i] == "c" || parsed[i] == "coded") {
+                nodeManager.ChangeSetting(CODED_VARIANT, int.Parse(parsed[i+1]));
+                i+=2;
+            }
+            else if (parsed[i] == "r" || parsed[i] == "range") {
+                nodeManager.ChangeSetting(RANGE, Mathf.RoundToInt(float.Parse(parsed[i+1], CultureInfo.InvariantCulture)*1000));
+                i+=2;
+            }
             else if (parsed[i] == "n" || parsed[i] == "dim" || parsed[i] == "dimension") {
                 nodeManager.ChangeSetting(DIMENSION, int.Parse(parsed[i+1]));
                 i+=2;
@@ -66,7 +77,7 @@ public class CommandLineParser : MonoBehaviour
                 nodeManager.RebuildNodes();
                 i+=3;
             }
-            else if (parsed[i] == "r" || parsed[i] == "random" || parsed[i] == "randomgrid") {
+            else if (parsed[i] == "m" || parsed[i] == "random" || parsed[i] == "randomgrid") {
                 nodeManager.ChangeSetting(GRID_X, int.Parse(parsed[i+1]));
                 nodeManager.ChangeSetting(GRID_Y, int.Parse(parsed[i+2]));
                 nodeManager.ChangeLayout(TRUE_RANDOM);

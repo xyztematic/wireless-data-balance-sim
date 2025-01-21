@@ -17,19 +17,20 @@ public class Node : MonoBehaviour
     private int firstZeroRow;
     public MatrixGF2 reducedMatrix;
     public int rank;
+    public bool[] packageIndicator;
     // Stores incoming data sent from neighboring nodes in a thread-safe queue for later processing
     public ConcurrentQueue<int[]> recieveBuffer;
     private MeshRenderer meshRenderer;
     private int dimension, logDimension, redundancyBonus;
     private int[] toBroadcast;
     private float loopTime, nodeRange;
-    private bool dynamicInventory;
+    private bool dynamicInventory, doCoding;
     private NodeManager.DistributionAlgorithm distrAlg;
 
     public bool active = false;
 
     public void Activate(NodeManager nodeManager, uint dimension, float loopTime, float nodeRange, ulong chunkID,
-        NodeManager.DistributionAlgorithm distrAlg, bool dynamicInventory, int redundancyBonus) {
+        NodeManager.DistributionAlgorithm distrAlg, bool dynamicInventory, int redundancyBonus, bool doCoding) {
         this.nodeManager = nodeManager;
         this.dimension = (int) dimension;
         this.logDimension = Mathf.FloorToInt(Mathf.Log(this.dimension, 2f)+1);
@@ -41,6 +42,7 @@ public class Node : MonoBehaviour
         this.distrAlg = distrAlg;
         this.dynamicInventory = dynamicInventory;
         this.redundancyBonus = redundancyBonus;
+        this.doCoding = doCoding;
         this.meshRenderer = gameObject.GetComponent<MeshRenderer>();
         // Get neighbor candidates from NodeManager and remove all candidates out of range
         neighbors = nodeManager.GetNeighborCandidates(chunkID);
@@ -50,6 +52,8 @@ public class Node : MonoBehaviour
         // Initialize empty inventory and reduced matrix
         inventory = new MatrixGF2(this.dimension, this.dimension);
         reducedMatrix = new MatrixGF2(this.dimension, this.dimension);
+        // Initialize a stored packet indicator for the non-coded version
+        packageIndicator = new bool[dimension];
         // Initialize the recieve buffer, where incoming data is queued
         recieveBuffer = new();
         // Start the node loop which handles sendingand receiving data
@@ -59,7 +63,6 @@ public class Node : MonoBehaviour
     
     private IEnumerator NodeLoop() {
         yield return new WaitForSeconds(Random.Range(0f, loopTime));
-        print(distrAlg.ToString());
         while (true) {
             bool notFull = false;
             for (int i = 0; i < neighborCount; i++) {
@@ -78,7 +81,10 @@ public class Node : MonoBehaviour
             }
             HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
             
-            if (rank > 0) BroadcastLRLC();
+            if (rank > 0) {
+                if (doCoding) BroadcastLRLC();
+                else BroadcastLocalRarest();
+            }
             
             yield return new WaitForSeconds(loopTime);
         }
@@ -128,6 +134,7 @@ public class Node : MonoBehaviour
     }
 
     // Dequeues the front item of the recieve-buffer and integrates it into the nodes inventory
+    // Updates packageIndicator when no coding is used
     private void StepRecieveBuffer(bool overwriteMode = false) {
         int[] topItem; int newRank;
         
@@ -141,11 +148,14 @@ public class Node : MonoBehaviour
             // If insert would increase rank, insert, otherwise return
             newRank = reducedMatrix.Ref();
             if (this.rank == newRank) return;
+
+            if (!doCoding) UpdatePackageIndicator(topItem);
             this.inventory.WriteRow(firstZeroRow, topItem);
         }
         // Overwrite mode (Node is deemed full), overwrites a random row. This prevents blocking of information relay.
         else {
             int rowToOverwrite = Random.Range(0, inventory.FirstZeroRow());
+            if (!doCoding) UpdatePackageIndicator(topItem, rowToOverwrite);
             this.inventory.WriteRow(rowToOverwrite, topItem);
             // We need to recompute the reduced matrix from scratch after an overwrite
             this.reducedMatrix = this.inventory.Copy();
@@ -193,6 +203,61 @@ public class Node : MonoBehaviour
             neighbor.TryGetComponent<Node>(out Node n);
             if (n == null || n.recieveBuffer == null) continue;
             n.recieveBuffer.Enqueue(toBroadcast);
+        }
+    }
+
+    // Computes the rarest package in the direct neighborhood, that this node could provide and sends it
+    private void BroadcastLocalRarest() {
+        int[] packageCounts = new int[dimension];
+        // Collect the package counts in the neighborhood
+        foreach (GameObject neighbor in this.neighbors) {
+            neighbor.TryGetComponent<Node>(out Node n);
+            if (n == null) continue;
+            for (int i = 0; i < packageCounts.Length; i++) {
+                if (n.packageIndicator[i]) packageCounts[i]++;
+            }
+        }
+        // Compute the local rarest package, defaults to the package with the lowest index "1"
+        int localRarest = -1, rarestFrequency = int.MaxValue;
+        for (int i = 0; i < packageCounts.Length; i++) {
+            if (packageCounts[i] < rarestFrequency && this.packageIndicator[i]) {
+                localRarest = i;
+                rarestFrequency = packageCounts[i];
+            }
+        }
+        if (localRarest < 0) {
+            for (int i = 0; i < packageIndicator.Length; i++) {
+                if (packageIndicator[i]) {
+                    localRarest = i;
+                    break;
+                }
+            }
+        }
+        // Send the local rarest package to all neighbors
+        for (int i = 0; i < toBroadcast.Length; i++) toBroadcast[i] = 0;
+        toBroadcast[localRarest] = 1;
+        foreach (GameObject neighbor in this.neighbors) {
+            neighbor.TryGetComponent<Node>(out Node n);
+            if (n == null || n.recieveBuffer == null) continue;
+            n.recieveBuffer.Enqueue(toBroadcast);
+        }
+    }
+
+    // Updates the packageIndicator to reflect changes after receiving a package and potentially overwriting
+    private void UpdatePackageIndicator(int[] receivedPackage, int rowToBeReplaced = -1) {
+        for (int i = 0; i < receivedPackage.Length; i++) {
+            if (receivedPackage[i] == 1) {
+                packageIndicator[i] = true;
+                break;
+            }
+        }
+        if (rowToBeReplaced >= 0) {
+            for (int i = 0; i < dimension; i++) {
+                if (this.inventory[rowToBeReplaced,i] == 1) {
+                    packageIndicator[i] = false;
+                    break;
+                }
+            }
         }
     }
 }

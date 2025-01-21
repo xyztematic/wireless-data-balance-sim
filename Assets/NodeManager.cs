@@ -21,11 +21,11 @@ public class NodeManager : MonoBehaviour
         MAX_DIM_DIV_MIN_NEIGHBORHOOD_ADD_RED,
     }
     private DistributionAlgorithm distrAlg = DistributionAlgorithm.MAX_DIM;
-    private bool dynamicInventory = true;
+    private bool dynamicInventory = true, doCodingAtNodes = true;
     private int redundancyBonus = 0;
 
     private readonly ulong yBitOffset = 0x00000001_00000000ul;
-    private const float SQRT3OVER2 = 0.866025404f;
+    private const float SQRT3OVER2 = 0.866025404f, epsilon = 1e-3f;
     private LayoutMode currentLayout = LayoutMode.GRID_SQUARE;
     private List<GameObject> allNodes = new();
     private List<GameObject> highlightedNodes = new();
@@ -39,7 +39,9 @@ public class NodeManager : MonoBehaviour
         DISTR_ALG,
         DYNAMIC_INVENTORY,
         REDUNDANCY_BONUS,
-        DIMENSION
+        DIMENSION,
+        RANGE,
+        CODED_VARIANT
     }
     public enum LayoutMode {
         GRID_SQUARE,
@@ -116,7 +118,7 @@ public class NodeManager : MonoBehaviour
             tempChunkIDs.Add(chunkID);
         }
         for (int i = 0; i < allNodes.Count; i++) {
-            allNodes[i].GetComponent<Node>().Activate(this, dimension, nodeLoopTime, nodeRange, tempChunkIDs[i], distrAlg, dynamicInventory, redundancyBonus);
+            allNodes[i].GetComponent<Node>().Activate(this, dimension, nodeLoopTime, nodeRange, tempChunkIDs[i], distrAlg, dynamicInventory, redundancyBonus, doCodingAtNodes);
         }
         // Update the floor object to fit the size of the new network, including the range of the nodes
         nodeBoundsX[0] -= nodeRange;
@@ -150,6 +152,12 @@ public class NodeManager : MonoBehaviour
                 break;
             case NodeSetting.DIMENSION:
                 dimension = (uint)newValue;
+                break;
+            case NodeSetting.RANGE:
+                nodeRange = newValue / 100f + epsilon;
+                break;
+            case NodeSetting.CODED_VARIANT:
+                doCodingAtNodes = newValue != 0;
                 break;
             default:
                 Debug.LogError("Tried to change unknown setting");
@@ -248,7 +256,7 @@ public class NodeManager : MonoBehaviour
         while (true) {
             print("Updating Coverage");
             CoverageCalculator.CoverageData cd = coverageCalculator.CalculateAndDisplayCoverage(
-                dimension, nodeRange, 6, coverageTextureSize.x, coverageTextureSize.y, floor, this);
+                dimension, nodeRange, 12, coverageTextureSize.x, coverageTextureSize.y, floor, this);
                 
             if (saveSimData) {
                 if (!didFileInit) {
