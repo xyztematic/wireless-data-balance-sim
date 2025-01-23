@@ -68,31 +68,47 @@ public static class SimulationMetricsIO
 
             case Metrics.ShareOfFullyCoveredMin1Intersect:
                 fullyCoveredPoints = 0;
+                int minIntersectPoints = 0;
                 for (int i = 0; i < coverageData.ranks.Length; i++) {
-                    if (coverageData.ranks[i] == dimension && coverageData.intersections[i] >= 1) fullyCoveredPoints++;
+                    if (coverageData.intersections[i] >= 1) {
+                        minIntersectPoints++;
+                        if (coverageData.ranks[i] == dimension) fullyCoveredPoints++;
+                    }
                 }
-                return (float)fullyCoveredPoints / coverageData.ranks.Length;
+                return (float)fullyCoveredPoints / minIntersectPoints;
 
             case Metrics.ShareOfFullyCoveredMin2Intersect:
                 fullyCoveredPoints = 0;
+                minIntersectPoints = 0;
                 for (int i = 0; i < coverageData.ranks.Length; i++) {
-                    if (coverageData.ranks[i] == dimension && coverageData.intersections[i] >= 2) fullyCoveredPoints++;
+                    if (coverageData.intersections[i] >= 2) {
+                        minIntersectPoints++;
+                        if (coverageData.ranks[i] == dimension) fullyCoveredPoints++;
+                    }
                 }
-                return (float)fullyCoveredPoints / coverageData.ranks.Length;
+                return (float)fullyCoveredPoints / minIntersectPoints;
 
             case Metrics.ShareOfFullyCoveredMin3Intersect:
                 fullyCoveredPoints = 0;
+                minIntersectPoints = 0;
                 for (int i = 0; i < coverageData.ranks.Length; i++) {
-                    if (coverageData.ranks[i] == dimension && coverageData.intersections[i] >= 3) fullyCoveredPoints++;
+                    if (coverageData.intersections[i] >= 3) {
+                        minIntersectPoints++;
+                        if (coverageData.ranks[i] == dimension) fullyCoveredPoints++;
+                    }
                 }
-                return (float)fullyCoveredPoints / coverageData.ranks.Length;
+                return (float)fullyCoveredPoints / minIntersectPoints;
 
             case Metrics.ShareOfFullyCoveredMin4Intersect:
                 fullyCoveredPoints = 0;
+                minIntersectPoints = 0;
                 for (int i = 0; i < coverageData.ranks.Length; i++) {
-                    if (coverageData.ranks[i] == dimension && coverageData.intersections[i] >= 4) fullyCoveredPoints++;
+                    if (coverageData.intersections[i] >= 4) {
+                        minIntersectPoints++;
+                        if (coverageData.ranks[i] == dimension) fullyCoveredPoints++;
+                    }
                 }
-                return (float)fullyCoveredPoints / coverageData.ranks.Length;
+                return (float)fullyCoveredPoints / minIntersectPoints;
 
             case Metrics.AverageInventoryLoad:
                 return (float)nodeInvLoads.Average();

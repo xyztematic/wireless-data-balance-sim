@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using UnityEngine;
 
 public class NodeManager : MonoBehaviour
@@ -16,9 +15,8 @@ public class NodeManager : MonoBehaviour
     public enum DistributionAlgorithm {
         MAX_DIM,
         MAX_DIM_DIV_NEIGHBORS,
-        MAX_DIM_DIV_NEIGHBORS_ADD_RED,
         MAX_DIM_DIV_MIN_NEIGHBORHOOD,
-        MAX_DIM_DIV_MIN_NEIGHBORHOOD_ADD_RED,
+        DIM_MINUS_ONE
     }
     private DistributionAlgorithm distrAlg = DistributionAlgorithm.MAX_DIM;
     private bool dynamicInventory = true, doCodingAtNodes = true;
@@ -59,6 +57,7 @@ public class NodeManager : MonoBehaviour
         return (ulong) Mathf.FloorToInt(xWorldPos / nodeRange) + ((ulong) Mathf.FloorToInt(zWorldPos / nodeRange)) * yBitOffset;
     }
     public void RebuildNodes() {
+        Random.InitState(42);
         UnhighlightAll();
         chunkLookup.Clear();
         nodeSourceMap = new bool[gridX*gridZ];
@@ -256,7 +255,7 @@ public class NodeManager : MonoBehaviour
         while (true) {
             print("Updating Coverage");
             CoverageCalculator.CoverageData cd = coverageCalculator.CalculateAndDisplayCoverage(
-                dimension, nodeRange, 12, coverageTextureSize.x, coverageTextureSize.y, floor, this);
+                dimension, nodeRange, 12, floor, 1f, this);
                 
             if (saveSimData) {
                 if (!didFileInit) {

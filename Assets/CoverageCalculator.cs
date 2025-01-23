@@ -20,14 +20,16 @@ public class CoverageCalculator : MonoBehaviour
     private ComputeBuffer rankDataBuffer;
     private int[] rankCoverage, intersections;
 
-    public CoverageData CalculateAndDisplayCoverage(uint dimension, float nodeRange, int maxNeighborsToLookAt, int pixelX, int pixelZ, GameObject floor, NodeManager nodeManager)
+    public CoverageData CalculateAndDisplayCoverage(uint dimension, float nodeRange, int maxNeighborsToLookAt,
+        GameObject floor, float pixelPerSizeUnit, NodeManager nodeManager)
     {
+        int pixelX = Mathf.CeilToInt(floor.transform.localScale.x * pixelPerSizeUnit);
+        int pixelZ = Mathf.CeilToInt(floor.transform.localScale.y * pixelPerSizeUnit);
         if (rankCoverage == null || rankCoverage.Length != pixelX*pixelZ) rankCoverage = new int[pixelX*pixelZ];
         if (intersections == null || intersections.Length != pixelX*pixelZ) intersections = new int[pixelX*pixelZ];
         rankLookup.Clear();
         float stepX = floor.transform.localScale.x / pixelX, stepZ = floor.transform.localScale.y / pixelZ;
         
-        // TODO: Outer loop as parallel?
         int iZ = 0;
         for (float currZ = floor.transform.position.z - floor.transform.localScale.y/2f; iZ < pixelZ; currZ+=stepZ) {
             int iX = 0;
@@ -74,6 +76,7 @@ public class CoverageCalculator : MonoBehaviour
         int kernel = cs.FindKernel("CSMain");
         if (rt.width != pixelX || rt.height != pixelZ) rt = new RenderTexture(pixelX, pixelZ, 0);
         rt.enableRandomWrite = true;
+        rt.filterMode = FilterMode.Point;
         floor.GetComponent<MeshRenderer>().material.mainTexture = rt;
         cs.SetTexture(kernel, "Result", rt);
 

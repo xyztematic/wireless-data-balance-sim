@@ -64,11 +64,18 @@ public class Node : MonoBehaviour
     private IEnumerator NodeLoop() {
         yield return new WaitForSeconds(Random.Range(0f, loopTime));
         while (true) {
+            // Broadcast to neighbors
+            if (rank > 0) {
+                if (doCoding) BroadcastLRLC();
+                else BroadcastLocalRarest();
+            }
+            // Check if the algorithm used deems this node full, then integrate the info in receive buffer accordingly
             bool notFull = false;
             for (int i = 0; i < neighborCount; i++) {
                 switch (distrAlg) {
-                    case MAX_DIM: notFull = rank < dimension; break;
-                    case MAX_DIM_DIV_NEIGHBORS: notFull = rank <= dimension / neighborCount + 1; break;
+                    case MAX_DIM: notFull = this.firstZeroRow < dimension; break;
+                    case MAX_DIM_DIV_NEIGHBORS: notFull = this.firstZeroRow <= dimension / neighborCount + 1; break;
+                    case DIM_MINUS_ONE: notFull = this.firstZeroRow < dimension - 1 ; break;
                     default: break;
                 }
             
@@ -79,13 +86,8 @@ public class Node : MonoBehaviour
                     if (dynamicInventory) StepRecieveBuffer(overwriteMode: true);
                 }
             }
+
             HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
-            
-            if (rank > 0) {
-                if (doCoding) BroadcastLRLC();
-                else BroadcastLocalRarest();
-            }
-            
             yield return new WaitForSeconds(loopTime);
         }
     }
@@ -106,6 +108,10 @@ public class Node : MonoBehaviour
 
     // Methods for setting the inventory of the node. Use only for configuring the source node of a network
     public void SetRandomBasisInventory() {
+        if (!doCoding) {
+            SetStandardBasisInventory();
+            return;
+        }
         print("Setting random basis inventory...");
         MatrixGF2 rndMatrix = new MatrixGF2(this.dimension, this.dimension);
         rndMatrix.Randomize();
@@ -129,6 +135,7 @@ public class Node : MonoBehaviour
         this.reducedMatrix = MatrixGF2.Identity(this.dimension);
         this.firstZeroRow = this.dimension;
         this.rank = this.dimension;
+        if (!doCoding) for (int i = 0; i < packageIndicator.Length; i++) packageIndicator[i] = true;
         HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
         print("Finished setting standard basis inventory!");
     }
@@ -233,6 +240,7 @@ public class Node : MonoBehaviour
                 }
             }
         }
+        if (localRarest < 0) return;
         // Send the local rarest package to all neighbors
         for (int i = 0; i < toBroadcast.Length; i++) toBroadcast[i] = 0;
         toBroadcast[localRarest] = 1;
