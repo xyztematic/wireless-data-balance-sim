@@ -12,12 +12,6 @@ public class NodeManager : MonoBehaviour
     public Color highlightColor1 = Color.red, highlightColor2 = Color.magenta;
     public string saveFilename = "simdata_test";
     public bool saveSimData = false, didFileInit = false;
-    public enum DistributionAlgorithm {
-        MAX_DIM,
-        MAX_DIM_DIV_NEIGHBORS,
-        MAX_DIM_DIV_MIN_NEIGHBORHOOD,
-        DIM_MINUS_ONE
-    }
     private DistributionAlgorithm distrAlg = DistributionAlgorithm.MAX_DIM;
     private bool dynamicInventory = true, doCodingAtNodes = true;
     private int redundancyBonus = 0;
@@ -31,6 +25,13 @@ public class NodeManager : MonoBehaviour
     private Coroutine coverageUpdater;
     private bool[] nodeSourceMap;
 
+    public enum DistributionAlgorithm {
+        MAX_DIM,
+        MAX_DIM_DIV_NEIGHBORS,
+        MAX_2_DIM_DIV_NEIGHBORS,
+        DIM_MINUS_ONE,
+        MAX_2_DIM_DIV_NEIGHBORS_EDGE_INCLUDE
+    }
     public enum NodeSetting {
         GRID_X,
         GRID_Y,

@@ -560,6 +560,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rank: 0
+  packageIndicator: 
   active: 0
 --- !u!1 &705507993
 GameObject:
@@ -1020,13 +1021,16 @@ MonoBehaviour:
   dimension: 30
   coverageTextureSize: {x: 100, y: 100}
   nodeLoopTime: 1
-  nodeRange: 12
+  nodeRange: 10.00001
   floor: {fileID: 2066384637}
   nodePrefab: {fileID: 429279981}
   nodeParent: {fileID: 1276339940}
   rangeIndicator: {fileID: 1568658187}
   highlightColor1: {r: 1, g: 0, b: 0, a: 1}
   highlightColor2: {r: 1, g: 0, b: 1, a: 1}
+  saveFilename: simdata_test
+  saveSimData: 0
+  didFileInit: 0
 --- !u!114 &1355791144
 MonoBehaviour:
   m_ObjectHideFlags: 0

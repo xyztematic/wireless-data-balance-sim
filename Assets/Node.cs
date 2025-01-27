@@ -75,6 +75,7 @@ public class Node : MonoBehaviour
                 switch (distrAlg) {
                     case MAX_DIM: notFull = this.firstZeroRow < dimension; break;
                     case MAX_DIM_DIV_NEIGHBORS: notFull = this.firstZeroRow <= dimension / neighborCount + 1; break;
+                    case MAX_2_DIM_DIV_NEIGHBORS: notFull = this.firstZeroRow <= 2 * dimension / Mathf.Max(neighborCount, 2) + 1; break;
                     case DIM_MINUS_ONE: notFull = this.firstZeroRow < dimension - 1 ; break;
                     default: break;
                 }
