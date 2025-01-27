@@ -6,7 +6,7 @@ using UnityEngine;
 public static class SimulationMetricsIO
 {
     public enum Metrics {
-        ShareOfFullyCovered,
+        MostPrevalentAreaRank,
         ShareOfFullyCoveredMin1Intersect,
         ShareOfFullyCoveredMin2Intersect,
         ShareOfFullyCoveredMin3Intersect,
@@ -59,15 +59,17 @@ public static class SimulationMetricsIO
 
     public static float ComputeMetric(Metrics metricToCompute) {
         switch (metricToCompute) {
-            case Metrics.ShareOfFullyCovered:
-                int fullyCoveredPoints = 0;
-                foreach (int i in coverageData.ranks) {
-                    if (i == dimension) fullyCoveredPoints++;
+            case Metrics.MostPrevalentAreaRank:
+                int[] rankCounts = new int[dimension + 1];
+                for (int i = 0; i < coverageData.ranks.Length; i++) {
+                    if (coverageData.intersections[i] >= 1) {
+                        rankCounts[coverageData.ranks[i]]++;
+                    }
                 }
-                return (float)fullyCoveredPoints / coverageData.ranks.Length;
+                return Array.IndexOf(rankCounts, rankCounts.Max());
 
             case Metrics.ShareOfFullyCoveredMin1Intersect:
-                fullyCoveredPoints = 0;
+                int fullyCoveredPoints = 0;
                 int minIntersectPoints = 0;
                 for (int i = 0; i < coverageData.ranks.Length; i++) {
                     if (coverageData.intersections[i] >= 1) {

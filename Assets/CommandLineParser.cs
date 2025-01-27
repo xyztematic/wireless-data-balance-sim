@@ -24,12 +24,11 @@ public class CommandLineParser : MonoBehaviour
             // Command presets (typing stuff is hard :/)
             if (parsed[i] == "p" || parsed[i] == "preset") {
                 switch (int.Parse(""+parsed[i+1])) {
-                    // Max dim flooding speed with one versus two opposing source nodes
-                    case 0: Parse("a 0 c 1 r 1 n 100 g 10 10 s 0 0 save p0_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 1: Parse("a 0 c 1 r 1 n 100 g 10 10 s 0 0 s 9 9 save p1_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    // Small network static versus dynamic inventory (showing information flow blockage)
-                    case 2: Parse("a 1 0 c 1 r 1 n 20 g 1 5 s 0 0 save p2_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 3: Parse("a 1 1 c 1 r 1 n 20 g 1 5 s 0 0 save p3_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    // Max dim flooding speed with one edge vs. two opposing vs. four opposing vs. one middle source node
+                    case 0: Parse("a 0 c 1 r 1 n 100 g 11 11 s 0 0 save p0_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 1: Parse("a 0 c 1 r 1 n 100 g 11 11 s 0 0 s 10 10 save p1_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 2: Parse("a 0 c 1 r 1 n 100 g 11 11 s 0 0 s 10 10 s 0 10 s 10 0 save p2_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 3: Parse("a 0 c 1 r 1 n 100 g 11 11 s 5 5 save p3_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     // Small network static versus dynamic inventory (extreme n-1 version)
                     case 4: Parse("a 3 0 c 1 r 1 n 100 h 5 5 s 2 2 save p4_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     case 5: Parse("a 3 1 c 1 r 1 n 100 h 5 5 s 2 2 save p5_"+System.DateTime.Now.ToFileTimeUtc()); break;
@@ -42,9 +41,9 @@ public class CommandLineParser : MonoBehaviour
                     // No coding versus coding (dim div neighbor limit)
                     case 10: Parse("a 1 c 0 r 1 n 100 h 10 10 s 0 0 save p10_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     case 11: Parse("a 1 c 1 r 1 n 100 h 10 10 s 0 0 save p11_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    // Small network static versus dynamic inventory (extreme n-1 version)
-                    case 12: Parse("a 3 0 c 1 r 1 n 100 h 5 5 s 2 2 save p12_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 13: Parse("a 3 1 c 1 r 1 n 100 h 5 5 s 2 2 save p13_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    // No coding versus coding (2*dim div neighbor limit)
+                    case 12: Parse("a 2 c 0 r 1 n 100 h 10 10 s 0 0 save p12_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 13: Parse("a 2 c 1 r 1 n 100 h 10 10 s 0 0 save p13_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     // Comparison of lowest range (dim/neighbor) vs. (2dim/max(neighbor,2)) in hex network (6 neighbors mostly)
                     case 14: Parse("a 1 c 1 r 1 n 100 h 10 10 s 0 0 save p14_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     case 15: Parse("a 2 c 1 r 1 n 100 h 10 10 s 0 0 save p15_"+System.DateTime.Now.ToFileTimeUtc()); break;
@@ -148,9 +147,11 @@ public class CommandLineParser : MonoBehaviour
                 i++;
             }
             else if (parsed[i] == "reset") {
+                Time.timeScale = 1f;
                 nodeManager.ChangeSetting(GRID_X, 0);
                 nodeManager.ChangeSetting(GRID_Y, 0);
                 nodeManager.RebuildNodes();
+                i++;
             }
             else {
                 print("No command detected!");

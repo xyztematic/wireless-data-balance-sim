@@ -74,7 +74,7 @@ public class Node : MonoBehaviour
             for (int i = 0; i < neighborCount; i++) {
                 switch (distrAlg) {
                     case MAX_DIM: notFull = this.firstZeroRow < dimension; break;
-                    case MAX_DIM_DIV_NEIGHBORS: notFull = this.firstZeroRow <= dimension / neighborCount + 1; break;
+                    case MAX_DIM_DIV_NEIGHBORS: notFull = this.firstZeroRow <= dimension / Mathf.Max(neighborCount, 1) + 1; break;
                     case MAX_2_DIM_DIV_NEIGHBORS: notFull = this.firstZeroRow <= 2 * dimension / Mathf.Max(neighborCount, 2) + 1; break;
                     case DIM_MINUS_ONE: notFull = this.firstZeroRow < dimension - 1 ; break;
                     default: break;
@@ -252,7 +252,7 @@ public class Node : MonoBehaviour
         }
     }
 
-    // Updates the packageIndicator to reflect changes after receiving a package and potentially overwriting
+    // Updates the packageIndicator to reflect changes after receiving a package and potentially overwriting (for no coding scenarios only)
     private void UpdatePackageIndicator(int[] receivedPackage, int rowToBeReplaced = -1) {
         for (int i = 0; i < receivedPackage.Length; i++) {
             if (receivedPackage[i] == 1) {
