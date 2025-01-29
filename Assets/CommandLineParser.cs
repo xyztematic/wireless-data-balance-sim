@@ -53,6 +53,28 @@ public class CommandLineParser : MonoBehaviour
                     // Comparison of lowest range (dim/neighbor) vs. (2dim/max(neighbor,2)) in square network (8 neighbors mostly)
                     case 18: Parse("a 1 c 1 r 1.415 n 100 g 10 10 s 0 0 save p18_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     case 19: Parse("a 2 c 1 r 1.415 n 100 g 10 10 s 0 0 save p19_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    // No coding versus coding (max dim flooding, hex net, n = 1000)
+                    case 100: Parse("a 0 c 0 r 1 n 1000 h 10 10 s 0 0 save p100_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 101: Parse("a 0 c 1 r 1 n 1000 h 10 10 s 0 0 save p101_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    // No coding versus coding (max dim flooding, square net, n = 1000)
+                    case 102: Parse("a 0 c 0 r 1 n 1000 g 10 10 s 0 0 save p102_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 103: Parse("a 0 c 1 r 1 n 1000 g 10 10 s 0 0 save p103_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    // No coding versus coding (max dim flooding, hex net, n = 100)
+                    case 104: Parse("a 0 c 0 r 1 n 100 h 10 10 s 0 0 save p104_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 105: Parse("a 0 c 1 r 1 n 100 h 10 10 s 0 0 save p105_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    // No coding versus coding (max dim flooding, square net, n = 100)
+                    case 106: Parse("a 0 c 0 r 1 n 100 g 10 10 s 0 0 save p106_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 107: Parse("a 0 c 1 r 1 n 100 g 10 10 s 0 0 save p107_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    // Max dim flooding speed with different source node configs (LR no coding)
+                    case 200: Parse("a 0 c 0 r 1 n 100 g 11 11 s 0 0 save p200_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 201: Parse("a 0 c 0 r 1 n 100 g 11 11 s 0 0 s 10 10 save p201_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 202: Parse("a 0 c 0 r 1 n 100 g 11 11 s 0 0 s 10 10 s 0 10 s 10 0 save p202_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 203: Parse("a 0 c 0 r 1 n 100 g 11 11 s 5 5 save p203_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    // Max dim flooding speed with different source node configs (RLNC)
+                    case 210: Parse("a 0 c 1 r 1 n 100 g 11 11 s 0 0 save p210_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 211: Parse("a 0 c 1 r 1 n 100 g 11 11 s 0 0 s 10 10 save p211_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 212: Parse("a 0 c 1 r 1 n 100 g 11 11 s 0 0 s 10 10 s 0 10 s 10 0 save p212_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 213: Parse("a 0 c 1 r 1 n 100 g 11 11 s 5 5 save p213_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     default: break;
                 }
                 break;

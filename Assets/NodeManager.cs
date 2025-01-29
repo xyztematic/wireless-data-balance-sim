@@ -6,16 +6,16 @@ public class NodeManager : MonoBehaviour
 {
     public uint gridX, gridZ, gridDistance, dimension;
     public Vector2Int coverageTextureSize;
-    public float nodeLoopTime, nodeRange;
+    public float nodeLoopTime, nodeRange, alpha;
     public GameObject floor, nodePrefab, nodeParent, rangeIndicator;
     public Dictionary<ulong, List<GameObject>> chunkLookup = new();
     public Color highlightColor1 = Color.red, highlightColor2 = Color.magenta;
     public string saveFilename = "simdata_test";
     public bool saveSimData = false, didFileInit = false;
+
     private DistributionAlgorithm distrAlg = DistributionAlgorithm.MAX_DIM;
     private bool dynamicInventory = true, doCodingAtNodes = true;
     private int redundancyBonus = 0;
-
     private readonly ulong yBitOffset = 0x00000001_00000000ul;
     private const float SQRT3OVER2 = 0.866025404f, epsilon = 1e-3f;
     private LayoutMode currentLayout = LayoutMode.GRID_SQUARE;
@@ -256,7 +256,7 @@ public class NodeManager : MonoBehaviour
         while (true) {
             print("Updating Coverage");
             CoverageCalculator.CoverageData cd = coverageCalculator.CalculateAndDisplayCoverage(
-                dimension, nodeRange, 12, floor, 1f, this);
+                dimension, nodeRange, 12, floor, alpha, this);
                 
             if (saveSimData) {
                 if (!didFileInit) {
