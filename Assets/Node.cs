@@ -62,6 +62,7 @@ public class Node : MonoBehaviour
     }
     
     private IEnumerator NodeLoop() {
+        ElongateNode((float)rank/dimension);
         yield return new WaitForSeconds(Random.Range(0f, loopTime));
         while (true) {
             // Broadcast to neighbors
@@ -88,13 +89,15 @@ public class Node : MonoBehaviour
                 }
             }
 
-            HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
+            ElongateNode((float)rank/dimension);
             yield return new WaitForSeconds(loopTime);
         }
     }
 
-    public void HighlightNode(Color highlightColor) {
-        meshRenderer.material.color = highlightColor;
+    public void ElongateNode(float normHeight) {
+        if (normHeight < 0f || normHeight > 1f) return;
+        if (normHeight == 1f) this.meshRenderer.material.color = new Color(1f, 0.5f, 0f);
+        transform.localScale = new Vector3(transform.localScale.x, 4f*normHeight + 0.5f, transform.localScale.z);
     }
     public List<GameObject> HighlightNeighbors(Color highlightColor) {
         foreach (GameObject neighbor in neighbors) {
@@ -127,7 +130,7 @@ public class Node : MonoBehaviour
         this.reducedMatrix = copy;
         this.firstZeroRow = dimension;
         this.rank = rank;
-        HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
+        ElongateNode((float)rank/dimension);
         print("Finished setting random basis inventory!");
     }
     public void SetStandardBasisInventory() {
@@ -137,7 +140,7 @@ public class Node : MonoBehaviour
         this.firstZeroRow = this.dimension;
         this.rank = this.dimension;
         if (!doCoding) for (int i = 0; i < packageIndicator.Length; i++) packageIndicator[i] = true;
-        HighlightNode(Color.HSVToRGB(0f, (float)rank/dimension, 1f));
+        ElongateNode((float)rank/dimension);
         print("Finished setting standard basis inventory!");
     }
 

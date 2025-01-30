@@ -24,14 +24,9 @@ public class CommandLineParser : MonoBehaviour
             // Command presets (typing stuff is hard :/)
             if (parsed[i] == "p" || parsed[i] == "preset") {
                 switch (int.Parse(""+parsed[i+1])) {
-                    // Max dim flooding speed with one edge vs. two opposing vs. four opposing vs. one middle source node
-                    case 0: Parse("a 0 c 1 r 1 n 100 g 11 11 s 0 0 save p0_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 1: Parse("a 0 c 1 r 1 n 100 g 11 11 s 0 0 s 10 10 save p1_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 2: Parse("a 0 c 1 r 1 n 100 g 11 11 s 0 0 s 10 10 s 0 10 s 10 0 save p2_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 3: Parse("a 0 c 1 r 1 n 100 g 11 11 s 5 5 save p3_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     // Small network static versus dynamic inventory (extreme n-1 version)
-                    case 4: Parse("a 3 0 c 1 r 1 n 100 h 5 5 s 2 2 save p4_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 5: Parse("a 3 1 c 1 r 1 n 100 h 5 5 s 2 2 save p5_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 0: Parse("a 3 0 c 1 r 1 n 100 h 5 5 s 2 2 save p0_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 1: Parse("a 3 1 c 1 r 1 n 100 h 5 5 s 2 2 save p1_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     // Coverage difference with low versus high range (keeps constant number of neighbors)
                     case 6: Parse("a 1 c 1 r 1 n 100 h 10 10 s 0 0 save p6_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     case 7: Parse("a 1 c 1 r 1.5 n 100 h 10 10 s 0 0 save p7_"+System.DateTime.Now.ToFileTimeUtc()); break;
@@ -75,6 +70,7 @@ public class CommandLineParser : MonoBehaviour
                     case 211: Parse("a 0 c 1 r 1 n 100 g 11 11 s 0 0 s 10 10 save p211_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     case 212: Parse("a 0 c 1 r 1 n 100 g 11 11 s 0 0 s 10 10 s 0 10 s 10 0 save p212_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     case 213: Parse("a 0 c 1 r 1 n 100 g 11 11 s 5 5 save p213_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    //ADD std basis vs. rnd basis source nodes. Especially look at redundant vectors
                     default: break;
                 }
                 break;
@@ -133,18 +129,6 @@ public class CommandLineParser : MonoBehaviour
             else if (parsed[i] == "std" || parsed[i] == "sourcestd") {
                 nodeManager.SetSourceNodeStandardBasis(int.Parse(parsed[i+1]), int.Parse(parsed[i+2]));
                 i+=3;
-            }
-            else if (parsed[i] == "i" || parsed[i] == "info") {
-                nodeManager.HighlightNode(int.Parse(parsed[i+1]), int.Parse(parsed[i+2]));
-                i+=3;
-            }
-            else if (parsed[i] == "in" || parsed[i] == "infon" || parsed[i] == "infoneighbor") {
-                nodeManager.HighlightNode(int.Parse(parsed[i+1]), int.Parse(parsed[i+2]), true);
-                i+=3;
-            }
-            else if (parsed[i] == "ic" || parsed[i] == "infoc" || parsed[i] == "infoclear") {
-                nodeManager.UnhighlightAll();
-                i+=1;
             }
             else if (parsed[i] == "saveto" || parsed[i] == "save") {
                 nodeManager.saveFilename = parsed[i+1].Replace(".","").Replace("/","");

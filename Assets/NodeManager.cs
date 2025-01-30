@@ -59,7 +59,6 @@ public class NodeManager : MonoBehaviour
     }
     public void RebuildNodes() {
         Random.InitState(42);
-        UnhighlightAll();
         chunkLookup.Clear();
         nodeSourceMap = new bool[gridX*gridZ];
         Transform parentTransform = nodeParent.transform;
@@ -198,28 +197,6 @@ public class NodeManager : MonoBehaviour
         }
         neighboringChunkIDs.RemoveAll(x => entriesToRemove.Contains(x));
         return neighboringChunkIDs;
-    }
-    public void HighlightNode(int x, int y, bool alsoHighlightNeighbors = false) {
-        UnhighlightAll();
-        int index = y * (int)gridX + x;
-        if (allNodes.Count < index) return;
-        if (alsoHighlightNeighbors) {
-            highlightedNodes.AddRange(allNodes[index].GetComponent<Node>().HighlightNeighbors(highlightColor2));
-        }
-        allNodes[index].GetComponent<MeshRenderer>().material.color = highlightColor1;
-        highlightedNodes.Add(allNodes[index]);
-
-        // add the range circle visualizer
-        rangeIndicator.transform.position = new Vector3(allNodes[index].transform.position.x, 0, allNodes[index].transform.position.z);
-        float scaleToSet = 2 * allNodes[index].GetComponent<Node>().GetNodeRange();
-        rangeIndicator.transform.localScale = scaleToSet * Vector3.one;
-    }
-    public void UnhighlightAll() {
-        foreach (GameObject go in highlightedNodes) {
-            go.GetComponent<MeshRenderer>().material.color = Color.white;
-        }
-        highlightedNodes.Clear();
-        rangeIndicator.transform.localScale = Vector3.zero;
     }
 
     public void SetSourceNodeRandomBasis(int x, int y) {
