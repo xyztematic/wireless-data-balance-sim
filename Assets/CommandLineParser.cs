@@ -36,9 +36,6 @@ public class CommandLineParser : MonoBehaviour
                     // No coding versus coding (dim div neighbor limit)
                     case 10: Parse("a 1 c 0 r 1 n 100 h 10 10 s 0 0 save p10_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     case 11: Parse("a 1 c 1 r 1 n 100 h 10 10 s 0 0 save p11_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    // No coding versus coding (2*dim div neighbor limit)
-                    case 12: Parse("a 2 c 0 r 1 n 100 h 10 10 s 0 0 save p12_"+System.DateTime.Now.ToFileTimeUtc()); break;
-                    case 13: Parse("a 2 c 1 r 1 n 100 h 10 10 s 0 0 save p13_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     // Comparison of lowest range (dim/neighbor) vs. (2dim/max(neighbor,2)) in hex network (6 neighbors mostly)
                     case 14: Parse("a 1 c 1 r 1 n 100 h 10 10 s 0 0 save p14_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     case 15: Parse("a 2 c 1 r 1 n 100 h 10 10 s 0 0 save p15_"+System.DateTime.Now.ToFileTimeUtc()); break;
@@ -70,6 +67,22 @@ public class CommandLineParser : MonoBehaviour
                     case 211: Parse("a 0 c 1 r 1 n 100 g 11 11 s 0 0 s 10 10 save p211_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     case 212: Parse("a 0 c 1 r 1 n 100 g 11 11 s 0 0 s 10 10 s 0 10 s 10 0 save p212_"+System.DateTime.Now.ToFileTimeUtc()); break;
                     case 213: Parse("a 0 c 1 r 1 n 100 g 11 11 s 5 5 save p213_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    // No coding versus coding (2*dim div neighbor limit) small range
+                    case 300: Parse("a 2 c 0 r 1 n 100 h 10 10 s 0 0 save p300_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 301: Parse("a 2 c 1 r 1 n 100 h 10 10 s 0 0 save p301_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 302: Parse("a 2 c 0 r 1 n 100 g 10 10 s 0 0 save p302_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 303: Parse("a 2 c 1 r 1 n 100 g 10 10 s 0 0 save p303_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    // No coding versus coding (2*dim div neighbor limit) mid range
+                    case 310: Parse("a 2 c 0 r 1.5 n 100 h 10 10 s 0 0 save p310_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 311: Parse("a 2 c 1 r 1.5 n 100 h 10 10 s 0 0 save p311_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 312: Parse("a 2 c 0 r 1.5 n 100 g 10 10 s 0 0 save p312_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 313: Parse("a 2 c 1 r 1.5 n 100 g 10 10 s 0 0 save p313_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    // RLNC rnd basis versus standard basis (2*dim div neighbor limit) vector diversity test
+                    case 400: Parse("a 2 c 1 r 1 n 100 g 10 10 s 0 0 save p400_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 401: Parse("a 2 c 1 r 1 n 100 g 10 10 std 0 0 save p401_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 402: Parse("a 2 c 1 r 1 n 100 h 10 10 s 0 0 save p402_"+System.DateTime.Now.ToFileTimeUtc()); break;
+                    case 403: Parse("a 2 c 1 r 1 n 100 h 10 10 std 0 0 save p403_"+System.DateTime.Now.ToFileTimeUtc()); break;
+
                     //ADD std basis vs. rnd basis source nodes. Especially look at redundant vectors
                     default: break;
                 }

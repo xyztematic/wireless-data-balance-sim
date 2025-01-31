@@ -1,26 +1,25 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class NodeManager : MonoBehaviour
 {
     public uint gridX, gridZ, gridDistance, dimension;
     public Vector2Int coverageTextureSize;
     public float nodeLoopTime, nodeRange, alpha;
-    public GameObject floor, nodePrefab, nodeParent, rangeIndicator;
+    public GameObject floor, nodePrefab, nodeParent, rangeIndicator, statsTextField;
     public Dictionary<ulong, List<GameObject>> chunkLookup = new();
-    public Color highlightColor1 = Color.red, highlightColor2 = Color.magenta;
     public string saveFilename = "simdata_test";
     public bool saveSimData = false, didFileInit = false;
 
     private DistributionAlgorithm distrAlg = DistributionAlgorithm.MAX_DIM;
     private bool dynamicInventory = true, doCodingAtNodes = true;
-    private int redundancyBonus = 0;
+    private int redundancyBonus = 0, timestep = 0;
     private readonly ulong yBitOffset = 0x00000001_00000000ul;
     private const float SQRT3OVER2 = 0.866025404f, epsilon = 1e-3f;
     private LayoutMode currentLayout = LayoutMode.GRID_SQUARE;
     private List<GameObject> allNodes = new();
-    private List<GameObject> highlightedNodes = new();
     private CoverageCalculator coverageCalculator;
     private Coroutine coverageUpdater;
     private bool[] nodeSourceMap;
@@ -60,6 +59,7 @@ public class NodeManager : MonoBehaviour
     public void RebuildNodes() {
         Random.InitState(42);
         chunkLookup.Clear();
+        timestep = 0;
         nodeSourceMap = new bool[gridX*gridZ];
         Transform parentTransform = nodeParent.transform;
         int diff = (int) (gridX*gridZ) - allNodes.Count;
@@ -242,11 +242,14 @@ public class NodeManager : MonoBehaviour
                 }
                 SimulationMetricsIO.WriteToFile(cd, GetNodeInvRanks(), GetNodeInvLoads(), GetNodeSourceMap(), dimension);
             }
-            
+            UpdateAndIncreaseTimestep();
             yield return new WaitForSeconds(nodeLoopTime);
         }
     }
-    
+    void UpdateAndIncreaseTimestep() {
+        statsTextField.TryGetComponent<Text>(out Text textComponent);
+        textComponent.text = "Timestep: "+(++timestep);
+    }
     void Start() {
         // Hides the dummy node prefab
         nodePrefab.GetComponent<MeshRenderer>().enabled = false;
