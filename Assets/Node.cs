@@ -21,16 +21,17 @@ public class Node : MonoBehaviour
     // Stores incoming data sent from neighboring nodes in a thread-safe queue for later processing
     public ConcurrentQueue<int[]> recieveBuffer;
     private MeshRenderer meshRenderer;
-    private int dimension, logDimension, redundancyBonus;
+    private int dimension, logDimension, codingMode;
+    private const int UNCODED_LOCAL_RAREST = 0, RLNC_CODING = 1, UNCODED_RANDOM = 2;
     private int[] toBroadcast;
     private float loopTime, nodeRange;
-    private bool dynamicInventory, doCoding;
+    private bool dynamicInventory;
     private NodeManager.DistributionAlgorithm distrAlg;
 
     public bool active = false;
 
     public void Activate(NodeManager nodeManager, uint dimension, float loopTime, float nodeRange, ulong chunkID,
-        NodeManager.DistributionAlgorithm distrAlg, bool dynamicInventory, int redundancyBonus, bool doCoding) {
+        NodeManager.DistributionAlgorithm distrAlg, bool dynamicInventory, int codingMode) {
         this.nodeManager = nodeManager;
         this.dimension = (int) dimension;
         this.logDimension = Mathf.FloorToInt(Mathf.Log(this.dimension, 2f)+1);
@@ -41,8 +42,7 @@ public class Node : MonoBehaviour
         this.nodeRange = nodeRange;
         this.distrAlg = distrAlg;
         this.dynamicInventory = dynamicInventory;
-        this.redundancyBonus = redundancyBonus;
-        this.doCoding = doCoding;
+        this.codingMode = codingMode;
         this.meshRenderer = gameObject.GetComponent<MeshRenderer>();
         // Get neighbor candidates from NodeManager and remove all candidates out of range
         neighbors = nodeManager.GetNeighborCandidates(chunkID);
@@ -67,16 +67,16 @@ public class Node : MonoBehaviour
         while (true) {
             // Broadcast to neighbors
             if (rank > 0) {
-                if (doCoding) BroadcastLRLC();
-                else BroadcastLocalRarest();
+                if (codingMode == 1) BroadcastLRLC();
+                else BroadcastUncoded(localRarestInsteadOfRandom: codingMode == UNCODED_LOCAL_RAREST);
             }
             // Check if the algorithm used deems this node full, then integrate the info in receive buffer accordingly
             bool notFull = false;
             for (int i = 0; i < neighborCount; i++) {
                 switch (distrAlg) {
                     case MAX_DIM: notFull = this.firstZeroRow < dimension; break;
-                    case MAX_DIM_DIV_NEIGHBORS: notFull = this.firstZeroRow <= dimension / Mathf.Max(neighborCount, 1) + 1; break;
-                    case MAX_2_DIM_DIV_NEIGHBORS: notFull = this.firstZeroRow <= 2 * dimension / Mathf.Max(neighborCount, 2) + 1; break;
+                    case MAX_DIM_DIV_NEIGHBORS: notFull = this.firstZeroRow < dimension / Mathf.Max(neighborCount, 1) + 1; break;
+                    case MAX_2_DIM_DIV_NEIGHBORS: notFull = this.firstZeroRow < 2 * dimension / Mathf.Max(neighborCount, 2) + 1; break;
                     case DIM_MINUS_ONE: notFull = this.firstZeroRow < dimension - 1 ; break;
                     default: break;
                 }
@@ -112,7 +112,7 @@ public class Node : MonoBehaviour
 
     // Methods for setting the inventory of the node. Use only for configuring the source node of a network
     public void SetRandomBasisInventory() {
-        if (!doCoding) {
+        if (codingMode != 1) {
             SetStandardBasisInventory();
             return;
         }
@@ -139,7 +139,7 @@ public class Node : MonoBehaviour
         this.reducedMatrix = MatrixGF2.Identity(this.dimension);
         this.firstZeroRow = this.dimension;
         this.rank = this.dimension;
-        if (!doCoding) for (int i = 0; i < packageIndicator.Length; i++) packageIndicator[i] = true;
+        if (codingMode != RLNC_CODING) for (int i = 0; i < packageIndicator.Length; i++) packageIndicator[i] = true;
         ElongateNode((float)rank/dimension);
         print("Finished setting standard basis inventory!");
     }
@@ -160,13 +160,13 @@ public class Node : MonoBehaviour
             newRank = reducedMatrix.Ref();
             if (this.rank == newRank) return;
 
-            if (!doCoding) UpdatePackageIndicator(topItem);
+            if (codingMode != RLNC_CODING) UpdatePackageIndicator(topItem);
             this.inventory.WriteRow(firstZeroRow, topItem);
         }
         // Overwrite mode (Node is deemed full), overwrites a random row. This prevents blocking of information relay.
         else {
             int rowToOverwrite = Random.Range(0, inventory.FirstZeroRow());
-            if (!doCoding) UpdatePackageIndicator(topItem, rowToOverwrite);
+            if (codingMode != RLNC_CODING) UpdatePackageIndicator(topItem, rowToOverwrite);
             this.inventory.WriteRow(rowToOverwrite, topItem);
             // We need to recompute the reduced matrix from scratch after an overwrite
             this.reducedMatrix = this.inventory.Copy();
@@ -218,36 +218,53 @@ public class Node : MonoBehaviour
     }
 
     // Computes the rarest package in the direct neighborhood, that this node could provide and sends it
-    private void BroadcastLocalRarest() {
-        int[] packageCounts = new int[dimension];
-        // Collect the package counts in the neighborhood
-        foreach (GameObject neighbor in this.neighbors) {
-            neighbor.TryGetComponent<Node>(out Node n);
-            if (n == null) continue;
+    private void BroadcastUncoded(bool localRarestInsteadOfRandom = false) {
+        if (localRarestInsteadOfRandom) {
+            int[] packageCounts = new int[dimension];
+            // Collect the package counts in the neighborhood
+            foreach (GameObject neighbor in this.neighbors) {
+                neighbor.TryGetComponent<Node>(out Node n);
+                if (n == null) continue;
+                for (int i = 0; i < packageCounts.Length; i++) {
+                    if (n.packageIndicator[i]) packageCounts[i]++;
+                }
+            }
+            // Compute the local rarest package, defaults to the package with the lowest index "1"
+            int localRarest = -1, rarestFrequency = int.MaxValue;
             for (int i = 0; i < packageCounts.Length; i++) {
-                if (n.packageIndicator[i]) packageCounts[i]++;
-            }
-        }
-        // Compute the local rarest package, defaults to the package with the lowest index "1"
-        int localRarest = -1, rarestFrequency = int.MaxValue;
-        for (int i = 0; i < packageCounts.Length; i++) {
-            if (packageCounts[i] < rarestFrequency && this.packageIndicator[i]) {
-                localRarest = i;
-                rarestFrequency = packageCounts[i];
-            }
-        }
-        if (localRarest < 0) {
-            for (int i = 0; i < packageIndicator.Length; i++) {
-                if (packageIndicator[i]) {
+                if (packageCounts[i] < rarestFrequency && this.packageIndicator[i]) {
                     localRarest = i;
+                    rarestFrequency = packageCounts[i];
+                }
+            }
+            if (localRarest < 0) {
+                for (int i = 0; i < packageIndicator.Length; i++) {
+                    if (packageIndicator[i]) {
+                        localRarest = i;
+                        break;
+                    }
+                }
+            }
+            if (localRarest < 0) return;
+            
+            for (int i = 0; i < toBroadcast.Length; i++) toBroadcast[i] = 0;
+            toBroadcast[localRarest] = 1;
+        }
+        else {
+            int numberOfPackagesToChoose = 0, count = -1;
+            for (int i = 0; i < toBroadcast.Length; i++) toBroadcast[i] = 0;
+            for (int i = 0; i < packageIndicator.Length; i++) {
+                if (packageIndicator[i]) numberOfPackagesToChoose++;
+            }
+            int packageNumber = Random.Range(0, numberOfPackagesToChoose);
+            for (int i = 0; i < packageIndicator.Length; i++) {
+                if (packageIndicator[i]) count++;
+                if (count == packageNumber) {
+                    toBroadcast[i] = 1;
                     break;
                 }
             }
         }
-        if (localRarest < 0) return;
-        // Send the local rarest package to all neighbors
-        for (int i = 0; i < toBroadcast.Length; i++) toBroadcast[i] = 0;
-        toBroadcast[localRarest] = 1;
         foreach (GameObject neighbor in this.neighbors) {
             neighbor.TryGetComponent<Node>(out Node n);
             if (n == null || n.recieveBuffer == null) continue;

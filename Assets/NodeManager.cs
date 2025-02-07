@@ -14,8 +14,8 @@ public class NodeManager : MonoBehaviour
     public bool saveSimData = false, didFileInit = false;
 
     private DistributionAlgorithm distrAlg = DistributionAlgorithm.MAX_DIM;
-    private bool dynamicInventory = true, doCodingAtNodes = true;
-    private int redundancyBonus = 0, timestep = 0;
+    private bool dynamicInventory = true;
+    private int timestep = 0, codingMode = 1;
     private readonly ulong yBitOffset = 0x00000001_00000000ul;
     private const float SQRT3OVER2 = 0.866025404f, epsilon = 1e-3f;
     private LayoutMode currentLayout = LayoutMode.GRID_SQUARE;
@@ -36,7 +36,6 @@ public class NodeManager : MonoBehaviour
         GRID_Y,
         DISTR_ALG,
         DYNAMIC_INVENTORY,
-        REDUNDANCY_BONUS,
         DIMENSION,
         RANGE,
         CODED_VARIANT
@@ -117,7 +116,8 @@ public class NodeManager : MonoBehaviour
             tempChunkIDs.Add(chunkID);
         }
         for (int i = 0; i < allNodes.Count; i++) {
-            allNodes[i].GetComponent<Node>().Activate(this, dimension, nodeLoopTime, nodeRange, tempChunkIDs[i], distrAlg, dynamicInventory, redundancyBonus, doCodingAtNodes);
+            allNodes[i].GetComponent<Node>().Activate(this, dimension, nodeLoopTime, nodeRange,
+                tempChunkIDs[i], distrAlg, dynamicInventory, codingMode);
         }
         // Update the floor object to fit the size of the new network, including the range of the nodes
         nodeBoundsX[0] -= nodeRange;
@@ -146,9 +146,6 @@ public class NodeManager : MonoBehaviour
             case NodeSetting.DYNAMIC_INVENTORY:
                 dynamicInventory = newValue != 0;
                 break;
-            case NodeSetting.REDUNDANCY_BONUS:
-                redundancyBonus = newValue;
-                break;
             case NodeSetting.DIMENSION:
                 dimension = (uint)newValue;
                 break;
@@ -156,7 +153,7 @@ public class NodeManager : MonoBehaviour
                 nodeRange = newValue / 100f + epsilon;
                 break;
             case NodeSetting.CODED_VARIANT:
-                doCodingAtNodes = newValue != 0;
+                codingMode = newValue;
                 break;
             default:
                 Debug.LogError("Tried to change unknown setting");
