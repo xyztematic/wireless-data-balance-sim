@@ -27,7 +27,7 @@ Linux x86 64 bit compatible machine (tested on Ubuntu 22.04 and 24.04)
 ### Simulation Commands
 A simulation command can either be a preset, if you have a simulation identifier, or a full command that specifies all parameters.
 #### Using a simulation identifier:
-Enter ```p <ID>```, where <ID> is the simulation identifier
+Enter ```p <ID>```, where \<ID\> is the simulation identifier
 #### Using a full command:
 Enter ```<inv_behavior> <allow_coding> <range> <dimension> <topology> <source_nodes> <save_file_name>```, where the parameters are the sub-commands specified below:
 
