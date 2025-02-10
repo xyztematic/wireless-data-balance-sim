@@ -166,7 +166,20 @@ public class Node : MonoBehaviour
         // Overwrite mode (Node is deemed full), overwrites a random row. This prevents blocking of information relay.
         else {
             int rowToOverwrite = Random.Range(0, inventory.FirstZeroRow());
-            if (codingMode != RLNC_CODING) UpdatePackageIndicator(topItem, rowToOverwrite);
+            // Before overwriting, we check if the received row has new information
+            // This removes the scenario where a useful row is overwritten with redundant row
+            if (codingMode != RLNC_CODING) {
+                int packageIndex = 0;
+                for (int i = 0; i < topItem.Length; i++) {
+                    if (topItem[i] == 1) {
+                        packageIndex = i;
+                        break;
+                    }
+                }
+                // For uncoded, we just check if the package is a duplicate
+                if (packageIndicator[packageIndex]) return;
+                UpdatePackageIndicator(topItem, rowToOverwrite);
+            }
             this.inventory.WriteRow(rowToOverwrite, topItem);
             // We need to recompute the reduced matrix from scratch after an overwrite
             this.reducedMatrix = this.inventory.Copy();
