@@ -4,7 +4,7 @@ Linux x86 64 bit compatible machine (tested on Ubuntu 22.04 and 24.04)
 ### Start with the provided build:
 - Clone this repository
 - Navigate to /Build
-- Execute Buildx86_64.so
+- Execute Build.x86_64.so
 ### Or build from source:
 - Install unityhub and follow the requirements that go along with it
 - Use unityhub to install the Unity Editor version 2022.3.48f1
@@ -36,8 +36,9 @@ Enter ```<inv_behavior> <allow_coding> <range> <dimension> <topology> <source_no
 |inv_behavior| ```a <x> <y>```| 0 (inventory limit n)| 0 (dynamic inventory off)| |
 | | | 2 (inventory limit 2*n/N(v))| 1 (dynamic inventory on)| |
 | | | 3 (inventory limit n - 1)| | |
-|allow_coding| ```c <x>```| 0 (no coding allowed)| | |
-| | | 1 (coding allowed)| | |
+|allow_coding| ```c <x>```| 0 (no coding local rarest)| | |
+| | | 1 (RLNC)| | |
+| | | 2 (no coding random package)| | |
 |range| ```r <x>```| any positive float (range of all nodes) | | |
 |dimension| ```d <x>```| any positive integer (dimension) | | |
 |topology| ```<t> <x> <y>``` | any positive integer (#nodes in x-direction)| any positive integer (#nodes in z-direction) | g (square topology) |
